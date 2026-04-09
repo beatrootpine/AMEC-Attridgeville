@@ -23,7 +23,7 @@ export default function EventDetail() {
     <div className="page">
       <div className="container" style={{ maxWidth: 720 }}>
         {event.banner_url && (
-          <img src={event.banner_url} alt="" style={{ width: '100%', height: 280, objectFit: 'cover', borderRadius: 'var(--radius-lg)', marginBottom: 32 }} />
+          <img src={event.banner_url} alt="" style={{ width: '100%', height: 'auto', maxHeight: 600, objectFit: 'contain', background: '#f0ede6', borderRadius: 'var(--radius-lg)', marginBottom: 32 }} />
         )}
 
         <h1 style={{ marginBottom: 8 }}>{event.title}</h1>
