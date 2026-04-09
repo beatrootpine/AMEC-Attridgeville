@@ -10,15 +10,99 @@ const defaults = {
   max_capacity: '', registration_open: true, registration_close_date: '',
   banking_name: '', banking_bank: '', banking_account_no: '', banking_branch_code: '', banking_reference_note: '',
   custom_fields: [],
+  player_fields: [
+    { id: 'full_name', label: 'Full Name', type: 'text', required: true, locked: true },
+    { id: 'email', label: 'Email', type: 'email', required: false },
+    { id: 'phone', label: 'Phone', type: 'tel', required: false },
+    { id: 'handicap', label: 'Handicap', type: 'text', required: false },
+    { id: 'shirt_size', label: 'Shirt Size', type: 'select', required: false, options: ['XS','S','M','L','XL','XXL','XXXL'] },
+    { id: 'dietary_requirements', label: 'Dietary Requirements', type: 'text', required: false, placeholder: 'e.g. Halaal, Vegetarian' },
+  ],
 }
 
-const fieldTypes = [
-  { value: 'text', label: 'Text Input' },
+const fieldTypeOptions = [
+  { value: 'text', label: 'Text' },
+  { value: 'email', label: 'Email' },
+  { value: 'tel', label: 'Phone' },
+  { value: 'number', label: 'Number' },
   { value: 'textarea', label: 'Long Text' },
   { value: 'select', label: 'Dropdown' },
   { value: 'checkbox', label: 'Checkbox' },
-  { value: 'number', label: 'Number' },
 ]
+
+function FieldBuilder({ fields, onChange, title, description }) {
+  const add = () => onChange([...fields, {
+    id: 'pf_' + Date.now(), label: '', type: 'text', required: false, options: [], placeholder: '',
+  }])
+  const update = (i, key, val) => { const u = [...fields]; u[i] = { ...u[i], [key]: val }; onChange(u) }
+  const remove = (i) => onChange(fields.filter((_, idx) => idx !== i))
+  const move = (i, dir) => {
+    const u = [...fields]; const j = i + dir
+    if (j < 0 || j >= u.length) return
+    ;[u[i], u[j]] = [u[j], u[i]]; onChange(u)
+  }
+
+  return (
+    <div className="form-section">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18, paddingBottom: 12, borderBottom: '1px solid var(--border)' }}>
+        <div>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.05rem', fontWeight: 700 }}>{title}</div>
+          <div className="text-muted" style={{ fontSize: '0.78rem', marginTop: 2 }}>{description}</div>
+        </div>
+        <button className="btn btn-outline btn-sm" onClick={add}>+ Add Field</button>
+      </div>
+
+      {fields.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: 20, color: 'var(--text-muted)', fontSize: '0.85rem' }}>No fields. Click "Add Field" to start.</div>
+      ) : (
+        <div style={{ display: 'grid', gap: 10 }}>
+          {fields.map((f, i) => (
+            <div key={f.id} style={{ padding: 14, border: '1px solid var(--border)', borderRadius: 'var(--radius)', background: f.locked ? 'rgba(89,26,74,0.03)' : 'var(--bg)' }}>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: f.locked ? 0 : 10 }}>
+                <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-dim)', minWidth: 18 }}>#{i+1}</span>
+                <input
+                  className="form-input"
+                  value={f.label}
+                  onChange={e => update(i, 'label', e.target.value)}
+                  placeholder="Field label"
+                  disabled={f.locked}
+                  style={{ flex: 1, padding: '7px 12px', fontSize: '0.85rem', opacity: f.locked ? 0.7 : 1 }}
+                />
+                <select
+                  className="form-select"
+                  value={f.type}
+                  onChange={e => update(i, 'type', e.target.value)}
+                  disabled={f.locked}
+                  style={{ width: 120, padding: '7px 10px', fontSize: '0.8rem' }}
+                >
+                  {fieldTypeOptions.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                </select>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.75rem', color: 'var(--text-muted)', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                  <input type="checkbox" checked={f.required} onChange={e => update(i, 'required', e.target.checked)} disabled={f.locked} style={{ accentColor: 'var(--purple)' }} />
+                  Req
+                </label>
+                {!f.locked && (
+                  <>
+                    <button onClick={() => move(i, -1)} disabled={i === 0} className="btn btn-outline btn-sm" style={{ padding: '3px 7px', fontSize: '0.7rem' }}>↑</button>
+                    <button onClick={() => move(i, 1)} disabled={i === fields.length - 1} className="btn btn-outline btn-sm" style={{ padding: '3px 7px', fontSize: '0.7rem' }}>↓</button>
+                    <button onClick={() => remove(i)} className="btn btn-danger btn-sm" style={{ padding: '3px 7px', fontSize: '0.7rem' }}>✕</button>
+                  </>
+                )}
+                {f.locked && <span style={{ fontSize: '0.65rem', color: 'var(--purple)', fontWeight: 600, whiteSpace: 'nowrap' }}>Required</span>}
+              </div>
+              {!f.locked && (f.type === 'text' || f.type === 'number' || f.type === 'email' || f.type === 'tel') && (
+                <input className="form-input" value={f.placeholder || ''} onChange={e => update(i, 'placeholder', e.target.value)} placeholder="Placeholder text (optional)" style={{ padding: '6px 12px', fontSize: '0.8rem' }} />
+              )}
+              {!f.locked && f.type === 'select' && (
+                <input className="form-input" value={(f.options || []).join(', ')} onChange={e => update(i, 'options', e.target.value.split(',').map(s => s.trim()).filter(Boolean))} placeholder="Options (comma-separated)" style={{ padding: '6px 12px', fontSize: '0.8rem' }} />
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 
 export default function AdminEventForm() {
   const { id } = useParams()
@@ -38,6 +122,7 @@ export default function AdminEventForm() {
           max_capacity: data.max_capacity || '',
           registration_close_date: data.registration_close_date || '',
           custom_fields: data.custom_fields || [],
+          player_fields: data.player_fields || defaults.player_fields,
         })
         setFetching(false)
       })
@@ -47,43 +132,14 @@ export default function AdminEventForm() {
   const set = (field, value) => setForm(prev => ({ ...prev, [field]: value }))
   const autoSlug = (title) => title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
 
-  // Custom field management
-  const addField = () => {
-    set('custom_fields', [...form.custom_fields, {
-      id: 'cf_' + Date.now(),
-      label: '',
-      type: 'text',
-      required: false,
-      options: [],
-      placeholder: '',
-    }])
-  }
-
-  const updateField = (index, key, value) => {
-    const updated = [...form.custom_fields]
-    updated[index] = { ...updated[index], [key]: value }
-    set('custom_fields', updated)
-  }
-
-  const removeField = (index) => {
-    set('custom_fields', form.custom_fields.filter((_, i) => i !== index))
-  }
-
-  const moveField = (index, dir) => {
-    const updated = [...form.custom_fields]
-    const newIndex = index + dir
-    if (newIndex < 0 || newIndex >= updated.length) return
-    ;[updated[index], updated[newIndex]] = [updated[newIndex], updated[index]]
-    set('custom_fields', updated)
-  }
-
   const handleSave = async () => {
     if (!form.title || !form.event_date) return toast.error('Title and date are required')
     if (!form.slug) form.slug = autoSlug(form.title)
 
-    // Validate custom fields
-    const invalidFields = form.custom_fields.filter(f => !f.label.trim())
-    if (invalidFields.length > 0) return toast.error('All custom fields need a label')
+    const invalidPF = form.player_fields.filter(f => !f.label.trim())
+    if (invalidPF.length) return toast.error('All player fields need a label')
+    const invalidCF = form.custom_fields.filter(f => !f.label.trim())
+    if (invalidCF.length) return toast.error('All custom fields need a label')
 
     setLoading(true)
     const payload = {
@@ -92,7 +148,6 @@ export default function AdminEventForm() {
       fourball_price: Number(form.fourball_price) || 0,
       max_capacity: Number(form.max_capacity) || null,
       registration_close_date: form.registration_close_date || null,
-      custom_fields: form.custom_fields,
     }
 
     let error
@@ -125,7 +180,7 @@ export default function AdminEventForm() {
           <div className="grid-2">
             <div className="form-group">
               <label className="form-label">URL Slug</label>
-              <input className="form-input" value={form.slug} onChange={e => set('slug', e.target.value)} placeholder="auto-generated" />
+              <input className="form-input" value={form.slug} onChange={e => set('slug', e.target.value)} />
             </div>
             <div className="form-group">
               <label className="form-label">Event Type</label>
@@ -143,7 +198,7 @@ export default function AdminEventForm() {
           </div>
           <div className="form-group">
             <label className="form-label">Description</label>
-            <textarea className="form-textarea" value={form.description} onChange={e => set('description', e.target.value)} placeholder="Describe the event..." style={{ minHeight: 120 }} />
+            <textarea className="form-textarea" value={form.description} onChange={e => set('description', e.target.value)} style={{ minHeight: 120 }} />
           </div>
           <div className="grid-2">
             <div className="form-group">
@@ -158,7 +213,7 @@ export default function AdminEventForm() {
           <div className="grid-2">
             <div className="form-group">
               <label className="form-label">Venue</label>
-              <input className="form-input" value={form.venue} onChange={e => set('venue', e.target.value)} placeholder="e.g. Centurion Golf Club" />
+              <input className="form-input" value={form.venue} onChange={e => set('venue', e.target.value)} />
             </div>
             <div className="form-group">
               <label className="form-label">Venue Address</label>
@@ -192,13 +247,13 @@ export default function AdminEventForm() {
             {(form.registration_type === 'individual' || form.registration_type === 'both') && (
               <div className="form-group">
                 <label className="form-label">Individual Price (R)</label>
-                <input className="form-input" type="number" value={form.individual_price} onChange={e => set('individual_price', e.target.value)} placeholder="0" />
+                <input className="form-input" type="number" value={form.individual_price} onChange={e => set('individual_price', e.target.value)} />
               </div>
             )}
             {(form.registration_type === 'fourball' || form.registration_type === 'both') && (
               <div className="form-group">
                 <label className="form-label">4-Ball Price (R)</label>
-                <input className="form-input" type="number" value={form.fourball_price} onChange={e => set('fourball_price', e.target.value)} placeholder="0" />
+                <input className="form-input" type="number" value={form.fourball_price} onChange={e => set('fourball_price', e.target.value)} />
               </div>
             )}
           </div>
@@ -206,7 +261,7 @@ export default function AdminEventForm() {
             <div className="form-group">
               <label className="form-label">Registration Close Date</label>
               <input className="form-input" type="date" value={form.registration_close_date} onChange={e => set('registration_close_date', e.target.value)} />
-              <div className="form-hint">Leave blank for no deadline. Registration will auto-close after this date.</div>
+              <div className="form-hint">Leave blank for no deadline</div>
             </div>
             <div className="form-group" style={{ display: 'flex', alignItems: 'flex-end', paddingBottom: 4 }}>
               <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
@@ -227,7 +282,7 @@ export default function AdminEventForm() {
             </div>
             <div className="form-group">
               <label className="form-label">Bank</label>
-              <input className="form-input" value={form.banking_bank} onChange={e => set('banking_bank', e.target.value)} placeholder="e.g. FNB" />
+              <input className="form-input" value={form.banking_bank} onChange={e => set('banking_bank', e.target.value)} />
             </div>
           </div>
           <div className="grid-2">
@@ -246,78 +301,21 @@ export default function AdminEventForm() {
           </div>
         </div>
 
-        {/* Custom Fields */}
-        <div className="form-section">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18, paddingBottom: 12, borderBottom: '1px solid var(--border)' }}>
-            <div>
-              <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.05rem', fontWeight: 700 }}>Custom Registration Fields</div>
-              <div className="text-muted" style={{ fontSize: '0.78rem', marginTop: 2 }}>Add extra questions to the registration form</div>
-            </div>
-            <button className="btn btn-outline btn-sm" onClick={addField}>+ Add Field</button>
-          </div>
+        {/* Player Form Fields */}
+        <FieldBuilder
+          fields={form.player_fields}
+          onChange={v => set('player_fields', v)}
+          title="Player Form Fields"
+          description="Configure which fields appear per player on the registration form. 'Full Name' is always required."
+        />
 
-          {form.custom_fields.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '24px 16px', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-              No custom fields added. Click "Add Field" to add questions like dietary preferences, company name, t-shirt size, etc.
-            </div>
-          ) : (
-            <div style={{ display: 'grid', gap: 12 }}>
-              {form.custom_fields.map((field, i) => (
-                <div key={field.id} style={{
-                  padding: 16, border: '1px solid var(--border)', borderRadius: 'var(--radius)',
-                  background: 'var(--bg)',
-                }}>
-                  <div style={{ display: 'flex', gap: 8, marginBottom: 12, alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-dim)', minWidth: 20 }}>#{i + 1}</span>
-                    <input
-                      className="form-input"
-                      value={field.label}
-                      onChange={e => updateField(i, 'label', e.target.value)}
-                      placeholder="Field label (e.g. Dietary Requirements)"
-                      style={{ flex: 1, padding: '8px 12px', fontSize: '0.85rem' }}
-                    />
-                    <select
-                      className="form-select"
-                      value={field.type}
-                      onChange={e => updateField(i, 'type', e.target.value)}
-                      style={{ width: 140, padding: '8px 12px', fontSize: '0.82rem' }}
-                    >
-                      {fieldTypes.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-                    </select>
-                  </div>
-
-                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                    {field.type === 'text' || field.type === 'number' ? (
-                      <input
-                        className="form-input"
-                        value={field.placeholder || ''}
-                        onChange={e => updateField(i, 'placeholder', e.target.value)}
-                        placeholder="Placeholder text (optional)"
-                        style={{ flex: 1, padding: '8px 12px', fontSize: '0.82rem' }}
-                      />
-                    ) : field.type === 'select' ? (
-                      <input
-                        className="form-input"
-                        value={(field.options || []).join(', ')}
-                        onChange={e => updateField(i, 'options', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
-                        placeholder="Options (comma-separated, e.g. Halaal, Vegetarian, None)"
-                        style={{ flex: 1, padding: '8px 12px', fontSize: '0.82rem' }}
-                      />
-                    ) : null}
-
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.78rem', color: 'var(--text-muted)', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                      <input type="checkbox" checked={field.required} onChange={e => updateField(i, 'required', e.target.checked)} style={{ accentColor: 'var(--purple)' }} />
-                      Required
-                    </label>
-                    <button onClick={() => moveField(i, -1)} disabled={i === 0} className="btn btn-outline btn-sm" style={{ padding: '4px 8px', fontSize: '0.75rem' }}>↑</button>
-                    <button onClick={() => moveField(i, 1)} disabled={i === form.custom_fields.length - 1} className="btn btn-outline btn-sm" style={{ padding: '4px 8px', fontSize: '0.75rem' }}>↓</button>
-                    <button onClick={() => removeField(i)} className="btn btn-danger btn-sm" style={{ padding: '4px 8px', fontSize: '0.75rem' }}>✕</button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        {/* Custom Registration Fields */}
+        <FieldBuilder
+          fields={form.custom_fields}
+          onChange={v => set('custom_fields', v)}
+          title="Extra Registration Fields"
+          description="Additional questions shown once per registration (not per player)"
+        />
 
         <div className="flex gap-3">
           <button className="btn btn-primary btn-lg" onClick={handleSave} disabled={loading} style={{ flex: 1 }}>
