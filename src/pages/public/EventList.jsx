@@ -11,7 +11,7 @@ export default function EventList() {
     supabase
       .from('events')
       .select('*')
-      .eq('registration_open', true)
+      
       .order('event_date', { ascending: true })
       .then(({ data }) => { setEvents(data || []); setLoading(false) })
   }, [])

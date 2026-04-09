@@ -12,25 +12,30 @@ export function AuthProvider({ children }) {
 
   const checkAdmin = async (userId) => {
     if (!userId) { setIsAdmin(false); return }
-    const { data } = await supabase
-      .from('admins')
-      .select('id')
-      .eq('user_id', userId)
-      .single()
-    setIsAdmin(!!data)
+    try {
+      const { data, error } = await supabase
+        .from('admins')
+        .select('id')
+        .eq('user_id', userId)
+        .single()
+      setIsAdmin(!error && !!data)
+    } catch {
+      setIsAdmin(false)
+    }
   }
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       const u = session?.user ?? null
       setUser(u)
-      await checkAdmin(u?.id)
+      if (u) await checkAdmin(u.id)
       setLoading(false)
     })
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       const u = session?.user ?? null
       setUser(u)
-      await checkAdmin(u?.id)
+      if (u) await checkAdmin(u.id)
+      else setIsAdmin(false)
     })
     return () => subscription.unsubscribe()
   }, [])
