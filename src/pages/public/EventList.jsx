@@ -87,7 +87,7 @@ export default function EventList() {
                   }}>
                     {/* Date */}
                     <div style={{
-                      background: 'var(--purple-glow)', border: '1px solid rgba(74,32,128,0.12)',
+                      background: 'var(--purple-glow)', border: '1px solid rgba(89,26,74,0.12)',
                       borderRadius: 'var(--radius)', padding: '14px 18px', textAlign: 'center', minWidth: 66,
                     }}>
                       <div style={{ fontSize: '1.6rem', fontFamily: 'var(--font-display)', color: 'var(--purple)', lineHeight: 1 }}>

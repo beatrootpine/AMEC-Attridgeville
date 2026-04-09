@@ -149,7 +149,7 @@ export default function MyRegistration() {
                           {/* Reference */}
                           <div style={{
                             display: 'inline-block', padding: '6px 14px', borderRadius: 'var(--radius)',
-                            background: 'var(--purple-glow)', border: '1px solid rgba(74,32,128,0.1)',
+                            background: 'var(--purple-glow)', border: '1px solid rgba(89,26,74,0.1)',
                             fontSize: '0.8rem', marginBottom: 16,
                           }}>
                             <span className="text-muted">Ref:</span>{' '}
@@ -170,7 +170,7 @@ export default function MyRegistration() {
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                                       <span style={{
                                         width: 26, height: 26, borderRadius: '50%',
-                                        background: 'var(--purple-glow)', border: '1px solid rgba(74,32,128,0.12)',
+                                        background: 'var(--purple-glow)', border: '1px solid rgba(89,26,74,0.12)',
                                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                                         fontSize: '0.7rem', fontWeight: 700, color: 'var(--purple)',
                                       }}>{p.player_number}</span>
