@@ -20,65 +20,53 @@ export default function EventList() {
     <>
       {/* Hero */}
       <div style={{
-        position: 'relative',
-        overflow: 'hidden',
-        background: 'linear-gradient(135deg, #1a3a1a 0%, #0e2a0e 40%, #0e0a18 100%)',
-        padding: '80px 20px 60px',
-        textAlign: 'center',
-        borderBottom: '1px solid rgba(212,168,50,0.2)',
+        position: 'relative', overflow: 'hidden',
+        background: 'linear-gradient(160deg, #3b1a6e 0%, #4a2080 30%, #2d1560 100%)',
+        padding: '64px 20px 56px', textAlign: 'center',
       }}>
         <div style={{
-          position: 'absolute', inset: 0, opacity: 0.04,
+          position: 'absolute', inset: 0, opacity: 0.06,
           backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)',
-          backgroundSize: '32px 32px',
+          backgroundSize: '28px 28px',
         }} />
-
-        <div style={{ position: 'relative', zIndex: 1, maxWidth: 640, margin: '0 auto' }}>
-          <img src="/logo.png" alt="AMEC" style={{ height: 90, marginBottom: 20, filter: 'drop-shadow(0 4px 20px rgba(212,168,50,0.3))' }} />
+        <div style={{ position: 'relative', zIndex: 1, maxWidth: 600, margin: '0 auto' }}>
+          <img src="/logo.png" alt="AMEC" style={{ height: 80, marginBottom: 16, filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.3))' }} />
           <div style={{
-            fontSize: '0.7rem', fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase',
-            color: 'var(--gold)', marginBottom: 12, fontFamily: 'var(--font-body)',
+            fontSize: '0.68rem', fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase',
+            color: 'rgba(255,255,255,0.65)', marginBottom: 10,
           }}>
             African Methodist Episcopal Church
           </div>
           <h1 style={{
-            fontFamily: 'var(--font-display)', fontSize: 'clamp(1.8rem, 5vw, 2.8rem)',
-            color: '#fff', marginBottom: 8, lineHeight: 1.2,
+            fontFamily: 'var(--font-display)', fontSize: 'clamp(1.6rem, 5vw, 2.4rem)',
+            color: '#fff', marginBottom: 6, lineHeight: 1.2,
           }}>
             Ebenezer Temple
           </h1>
-          <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '1rem', marginBottom: 28, letterSpacing: 0.5 }}>
+          <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.95rem', marginBottom: 24 }}>
             Atteridgeville, Pretoria West
           </p>
-
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 8,
-            padding: '10px 24px', borderRadius: 40,
-            background: 'rgba(212,168,50,0.1)', border: '1px solid rgba(212,168,50,0.25)',
-            color: 'var(--gold)', fontSize: '0.85rem', fontWeight: 600,
-          }}>
-            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#34d399', animation: 'pulse 2s ease-in-out infinite' }} />
-            Registration Open
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <a href="#events" style={{
+              padding: '11px 28px', borderRadius: 'var(--radius)',
+              background: 'var(--gold)', color: '#fff', fontWeight: 600,
+              fontSize: '0.9rem', textDecoration: 'none', transition: 'all 0.2s',
+            }}>View Events ↓</a>
+            <Link to="/my-registration" style={{
+              padding: '11px 28px', borderRadius: 'var(--radius)',
+              background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.25)',
+              color: '#fff', fontWeight: 600, fontSize: '0.9rem', textDecoration: 'none',
+            }}>My Registration</Link>
           </div>
         </div>
-
-        <div style={{
-          position: 'absolute', bottom: 0, left: 0, right: 0, height: 80,
-          background: 'linear-gradient(to top, var(--bg), transparent)',
-        }} />
       </div>
 
       {/* Events */}
-      <div className="page" style={{ paddingTop: 32 }}>
+      <div className="page" style={{ paddingTop: 32 }} id="events">
         <div className="container">
-          <div style={{
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            marginBottom: 32, flexWrap: 'wrap', gap: 12,
-          }}>
-            <div>
-              <h2 style={{ marginBottom: 4 }}>Upcoming <span className="text-gold">Events</span></h2>
-              <p className="text-muted">Register below to secure your spot</p>
-            </div>
+          <div style={{ marginBottom: 28 }}>
+            <h2 style={{ marginBottom: 4 }}>Upcoming <span className="text-gold">Events</span></h2>
+            <p className="text-muted">Select an event to view details and register</p>
           </div>
 
           {loading ? (
@@ -86,62 +74,45 @@ export default function EventList() {
           ) : events.length === 0 ? (
             <div className="empty-state">
               <div className="empty-state-icon">📅</div>
-              <p>No upcoming events right now. Check back soon!</p>
+              <p style={{ marginBottom: 8, fontWeight: 500 }}>No upcoming events</p>
+              <p className="text-muted">Check back soon for new events</p>
             </div>
           ) : (
-            <div style={{ display: 'grid', gap: 24 }}>
+            <div style={{ display: 'grid', gap: 16 }}>
               {events.map(ev => (
                 <Link key={ev.id} to={`/event/${ev.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                   <div className="card card-hover" style={{
                     display: 'grid', gridTemplateColumns: 'auto 1fr auto',
-                    alignItems: 'center', gap: 24, padding: 24,
+                    alignItems: 'center', gap: 20, padding: '20px 24px',
                   }}>
+                    {/* Date */}
                     <div style={{
-                      background: 'linear-gradient(135deg, rgba(74,32,128,0.3), rgba(74,32,128,0.1))',
-                      border: '1px solid rgba(74,32,128,0.3)',
-                      borderRadius: 'var(--radius)', padding: '16px 20px',
-                      textAlign: 'center', minWidth: 72,
+                      background: 'var(--purple-glow)', border: '1px solid rgba(74,32,128,0.12)',
+                      borderRadius: 'var(--radius)', padding: '14px 18px', textAlign: 'center', minWidth: 66,
                     }}>
-                      <div style={{ fontSize: '1.8rem', fontFamily: 'var(--font-display)', color: 'var(--gold)', lineHeight: 1 }}>
+                      <div style={{ fontSize: '1.6rem', fontFamily: 'var(--font-display)', color: 'var(--purple)', lineHeight: 1 }}>
                         {format(new Date(ev.event_date), 'd')}
                       </div>
-                      <div style={{ fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: 1.5, color: 'rgba(255,255,255,0.5)', marginTop: 4 }}>
-                        {format(new Date(ev.event_date), 'MMM')}
-                      </div>
-                      <div style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.3)' }}>
-                        {format(new Date(ev.event_date), 'yyyy')}
+                      <div style={{ fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: 1, color: 'var(--text-muted)', marginTop: 2 }}>
+                        {format(new Date(ev.event_date), 'MMM yyyy')}
                       </div>
                     </div>
 
+                    {/* Info */}
                     <div>
-                      <h3 style={{ marginBottom: 6, fontSize: '1.15rem' }}>{ev.title}</h3>
-                      <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                      <h3 style={{ marginBottom: 4, fontSize: '1.1rem' }}>{ev.title}</h3>
+                      <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
                         {ev.venue && <span>📍 {ev.venue}</span>}
                         {ev.event_time && <span>🕐 {ev.event_time}</span>}
-                        {ev.event_type && <span style={{
-                          padding: '2px 8px', borderRadius: 4,
-                          background: 'rgba(52,211,153,0.1)', color: '#34d399',
-                          fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: 0.5,
-                        }}>{ev.event_type.replace('_', ' ')}</span>}
                       </div>
-                      {ev.description && (
-                        <p style={{ marginTop: 8, fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
-                          {ev.description.substring(0, 100)}{ev.description.length > 100 ? '...' : ''}
-                        </p>
-                      )}
                     </div>
 
-                    <div style={{ textAlign: 'right', minWidth: 100 }}>
+                    {/* Price */}
+                    <div style={{ textAlign: 'right' }}>
                       {(ev.registration_type === 'individual' || ev.registration_type === 'both') && (
-                        <div style={{ marginBottom: 4 }}>
-                          <div style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Individual</div>
-                          <div style={{ fontFamily: 'var(--font-display)', color: 'var(--gold)', fontSize: '1.1rem' }}>R{ev.individual_price}</div>
-                        </div>
-                      )}
-                      {(ev.registration_type === 'fourball' || ev.registration_type === 'both') && (
-                        <div>
-                          <div style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>4-Ball</div>
-                          <div style={{ fontFamily: 'var(--font-display)', color: 'var(--gold)', fontSize: '1.1rem' }}>R{ev.fourball_price}</div>
+                        <div style={{ marginBottom: 2 }}>
+                          <div style={{ fontSize: '0.6rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>From</div>
+                          <div style={{ fontFamily: 'var(--font-display)', color: 'var(--gold)', fontSize: '1.15rem' }}>R{ev.individual_price}</div>
                         </div>
                       )}
                     </div>
@@ -151,26 +122,17 @@ export default function EventList() {
             </div>
           )}
 
+          {/* Footer */}
           <div style={{
-            marginTop: 60, paddingTop: 32, borderTop: '1px solid var(--border)',
-            textAlign: 'center', color: 'var(--text-dim)', fontSize: '0.8rem',
+            marginTop: 60, paddingTop: 24, borderTop: '1px solid var(--border)',
+            textAlign: 'center', fontSize: '0.78rem', color: 'var(--text-dim)',
           }}>
-            <img src="/logo.png" alt="" style={{ height: 40, opacity: 0.4, marginBottom: 12 }} />
+            <img src="/logo.png" alt="" style={{ height: 36, opacity: 0.3, marginBottom: 10 }} />
             <div>AMEC Ebenezer Temple · Atteridgeville, Pretoria West</div>
-            <div style={{ marginTop: 4 }}>Powered by Beatroot Pineapple</div>
+            <div style={{ marginTop: 4 }}>Powered by <span style={{ color: 'var(--text-muted)' }}>Beatroot Pineapple</span></div>
           </div>
         </div>
       </div>
-
-      <style>{`
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.4; }
-        }
-        @media (max-width: 640px) {
-          .card-hover[style] { grid-template-columns: 1fr !important; }
-        }
-      `}</style>
     </>
   )
 }

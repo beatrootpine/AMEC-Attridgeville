@@ -6,6 +6,7 @@ import EventList from './pages/public/EventList'
 import EventDetail from './pages/public/EventDetail'
 import Register from './pages/public/Register'
 import Success from './pages/public/Success'
+import MyRegistration from './pages/public/MyRegistration'
 import AdminLogin from './pages/admin/AdminLogin'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminEvent from './pages/admin/AdminEvent'
@@ -27,6 +28,7 @@ export default function App() {
       <Route path="/event/:slug" element={<><Navbar /><EventDetail /></>} />
       <Route path="/event/:slug/register" element={<><Navbar /><Register /></>} />
       <Route path="/success" element={<><Navbar /><Success /></>} />
+      <Route path="/my-registration" element={<><Navbar /><MyRegistration /></>} />
 
       {/* Admin */}
       <Route path="/admin/login" element={<AdminLogin />} />

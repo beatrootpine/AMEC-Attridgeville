@@ -20,11 +20,11 @@ export default function AdminLogin() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, background: 'var(--bg)' }}>
       <div style={{ maxWidth: 400, width: '100%' }}>
         <div className="text-center mb-4">
-          <img src="/logo.png" alt="AMEC" style={{ height: 72, width: 'auto', marginBottom: 12 }} />
-          <h1 style={{ color: 'var(--gold)', marginBottom: 8 }}>Admin Login</h1>
+          <img src="/logo.png" alt="AMEC" style={{ height: 72, marginBottom: 12 }} />
+          <h1 style={{ marginBottom: 6 }}>Admin Login</h1>
           <p className="text-muted">AMEC Event Management</p>
         </div>
         <div className="form-section">
