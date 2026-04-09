@@ -16,6 +16,9 @@ export default function EventDetail() {
   if (loading) return <div className="loading-page"><div className="spinner" /></div>
   if (!event) return <div className="page container"><div className="empty-state"><p>Event not found.</p></div></div>
 
+  const isClosedByDate = event.registration_close_date && new Date(event.registration_close_date + 'T23:59:59') < new Date()
+  const isClosed = !event.registration_open || isClosedByDate
+
   return (
     <div className="page">
       <div className="container" style={{ maxWidth: 720 }}>
@@ -30,8 +33,18 @@ export default function EventDetail() {
           {event.venue && <span className="text-muted">📍 {event.venue}</span>}
         </div>
 
+        {event.registration_close_date && !isClosedByDate && (
+          <div style={{
+            padding: '10px 16px', borderRadius: 'var(--radius)', marginBottom: 20,
+            background: 'var(--yellow-dim)', border: '1px solid rgba(202,138,4,0.15)',
+            fontSize: '0.85rem', color: 'var(--yellow)',
+          }}>
+            ⏰ Registration closes <strong>{format(new Date(event.registration_close_date), 'd MMMM yyyy')}</strong>
+          </div>
+        )}
+
         {event.description && (
-          <div className="card mb-4" style={{ lineHeight: 1.8, color: 'var(--text-muted)', whiteSpace: 'pre-line' }}>
+          <div className="card mb-4" style={{ lineHeight: 1.8, color: 'var(--text-secondary)', whiteSpace: 'pre-line' }}>
             {event.description}
           </div>
         )}
@@ -40,24 +53,24 @@ export default function EventDetail() {
           <h3 style={{ marginBottom: 16 }}>Registration Options</h3>
           <div className="grid-2">
             {(event.registration_type === 'individual' || event.registration_type === 'both') && (
-              <div style={{ padding: 20, border: '1px solid var(--border)', borderRadius: 'var(--radius)', textAlign: 'center' }}>
+              <div style={{ padding: 20, border: '1px solid var(--border)', borderRadius: 'var(--radius)', textAlign: 'center', background: 'var(--bg)' }}>
                 <div style={{ fontSize: '2rem', marginBottom: 8 }}>🏌️</div>
                 <div style={{ fontWeight: 600, marginBottom: 4 }}>Individual</div>
-                <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', color: 'var(--gold)' }}>R{event.individual_price}</div>
+                <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', color: 'var(--gold)', fontWeight: 700 }}>R{event.individual_price}</div>
               </div>
             )}
             {(event.registration_type === 'fourball' || event.registration_type === 'both') && (
-              <div style={{ padding: 20, border: '1px solid var(--border)', borderRadius: 'var(--radius)', textAlign: 'center' }}>
+              <div style={{ padding: 20, border: '1px solid var(--border)', borderRadius: 'var(--radius)', textAlign: 'center', background: 'var(--bg)' }}>
                 <div style={{ fontSize: '2rem', marginBottom: 8 }}>👥</div>
                 <div style={{ fontWeight: 600, marginBottom: 4 }}>4-Ball</div>
-                <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', color: 'var(--gold)' }}>R{event.fourball_price}</div>
+                <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', color: 'var(--gold)', fontWeight: 700 }}>R{event.fourball_price}</div>
               </div>
             )}
           </div>
         </div>
 
         {event.banking_name && (
-          <div className="card mb-4" style={{ background: 'rgba(201,168,76,0.04)' }}>
+          <div className="card mb-4" style={{ background: 'var(--gold-glow)' }}>
             <h3 style={{ marginBottom: 12 }}>Banking Details</h3>
             <div style={{ display: 'grid', gap: 8, fontSize: '0.9rem' }}>
               <div><span className="text-muted">Account Name:</span> {event.banking_name}</div>
@@ -69,14 +82,15 @@ export default function EventDetail() {
           </div>
         )}
 
-        {event.registration_open ? (
+        {isClosed ? (
+          <div className="card text-center" style={{ color: 'var(--text-muted)', padding: 32 }}>
+            <div style={{ fontSize: '1.5rem', marginBottom: 8 }}>🚫</div>
+            {isClosedByDate ? 'The registration deadline for this event has passed.' : 'Registration is currently closed for this event.'}
+          </div>
+        ) : (
           <Link to={`/event/${slug}/register`} className="btn btn-primary btn-lg btn-full" style={{ textDecoration: 'none' }}>
             Register Now →
           </Link>
-        ) : (
-          <div className="card text-center" style={{ color: 'var(--text-muted)' }}>
-            Registration is currently closed for this event.
-          </div>
         )}
       </div>
     </div>
