@@ -14,9 +14,19 @@ import AdminEventForm from './pages/admin/AdminEventForm'
 import AdminRegistration from './pages/admin/AdminRegistration'
 
 function ProtectedRoute({ children }) {
-  const { user, loading } = useAuth()
+  const { user, isAdmin, loading } = useAuth()
   if (loading) return <div className="loading-page"><div className="spinner" /></div>
   if (!user) return <Navigate to="/admin/login" />
+  if (!isAdmin) return (
+    <div className="page">
+      <div className="container" style={{ maxWidth: 480, textAlign: 'center', paddingTop: 60 }}>
+        <div style={{ fontSize: '3rem', marginBottom: 12 }}>🔒</div>
+        <h1 style={{ marginBottom: 8 }}>Access Denied</h1>
+        <p className="text-muted" style={{ marginBottom: 24 }}>Your account is not registered as an admin. Contact an existing admin to be added.</p>
+        <a href="/" className="btn btn-outline">← Back to Home</a>
+      </div>
+    </div>
+  )
   return children
 }
 
