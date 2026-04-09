@@ -23,9 +23,9 @@ export default function AdminLogin() {
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div style={{ maxWidth: 400, width: '100%' }}>
         <div className="text-center mb-4">
-          <div style={{ fontSize: 48, marginBottom: 12 }}>⛳</div>
+          <img src="/logo.png" alt="AMEC" style={{ height: 72, width: 'auto', marginBottom: 12 }} />
           <h1 style={{ color: 'var(--gold)', marginBottom: 8 }}>Admin Login</h1>
-          <p className="text-muted">Event Management System</p>
+          <p className="text-muted">AMEC Event Management</p>
         </div>
         <div className="form-section">
           <div className="form-group">

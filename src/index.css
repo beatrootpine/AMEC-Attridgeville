@@ -1,13 +1,15 @@
 :root {
-  --bg: #0c0c1a;
-  --bg-card: #141428;
-  --bg-card-hover: #1a1a36;
-  --bg-input: #0f0f22;
-  --border: rgba(201,168,76,0.12);
-  --border-strong: rgba(201,168,76,0.3);
-  --gold: #c9a84c;
-  --gold-dim: rgba(201,168,76,0.6);
-  --gold-glow: rgba(201,168,76,0.08);
+  --bg: #0e0a18;
+  --bg-card: #1a1230;
+  --bg-card-hover: #231842;
+  --bg-input: #120d22;
+  --border: rgba(180,140,60,0.15);
+  --border-strong: rgba(180,140,60,0.35);
+  --gold: #d4a832;
+  --gold-dim: rgba(212,168,50,0.6);
+  --gold-glow: rgba(212,168,50,0.08);
+  --purple: #4a2080;
+  --purple-light: #6b3fa0;
   --green: #34d399;
   --green-dim: rgba(52,211,153,0.15);
   --red: #f87171;

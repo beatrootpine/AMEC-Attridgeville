@@ -15,7 +15,10 @@ export default function AdminNavbar() {
   return (
     <nav className="navbar">
       <div className="navbar-inner">
-        <Link to="/admin" className="navbar-brand">⛳ Admin</Link>
+        <Link to="/admin" className="navbar-brand" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <img src="/logo.png" alt="AMEC" style={{ height: 36, width: 'auto' }} />
+          <span>AMEC Admin</span>
+        </Link>
         <div className="navbar-links">
           <Link to="/admin" className={isActive('/admin')}>Dashboard</Link>
           <Link to="/admin/events/new" className={isActive('/admin/events/new')}>New Event</Link>
