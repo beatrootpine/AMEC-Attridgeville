@@ -122,7 +122,7 @@ export default function AdminEventForm() {
           max_capacity: data.max_capacity || '',
           registration_close_date: data.registration_close_date || '',
           custom_fields: data.custom_fields || [],
-          player_fields: data.player_fields || defaults.player_fields,
+          player_fields: (data.player_fields && data.player_fields.length > 0) ? data.player_fields : defaults.player_fields,
         })
         setFetching(false)
       })

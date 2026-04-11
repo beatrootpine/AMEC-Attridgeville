@@ -31,9 +31,15 @@ export default function Register() {
       })
   }, [slug])
 
-  const playerFields = event?.player_fields || [
+  const defaultPlayerFields = [
     { id: 'full_name', label: 'Full Name', type: 'text', required: true },
+    { id: 'email', label: 'Email', type: 'email', required: false },
+    { id: 'phone', label: 'Phone', type: 'tel', required: true },
+    { id: 'handicap', label: 'Handicap', type: 'text', required: false },
+    { id: 'shirt_size', label: 'Shirt Size', type: 'select', required: false, options: ['XS','S','M','L','XL','XXL','XXXL'] },
+    { id: 'dietary_requirements', label: 'Dietary Requirements', type: 'text', required: false, placeholder: 'e.g. Halaal, Vegetarian' },
   ]
+  const playerFields = (event?.player_fields && event.player_fields.length > 0) ? event.player_fields : defaultPlayerFields
 
   // Build empty player from field config
   const emptyPlayer = () => {
