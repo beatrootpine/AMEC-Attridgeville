@@ -138,6 +138,7 @@ export default function AdminEvent() {
           <div className="flex gap-2 flex-wrap">
             <button className="btn btn-outline btn-sm" onClick={exportCSV}>📥 Export CSV</button>
             <button className="btn btn-outline btn-sm" onClick={() => setShowEmail(true)}>✉️ Email All</button>
+            <Link to={`/admin/events/${id}/sponsors`} className="btn btn-outline btn-sm" style={{ textDecoration: 'none' }}>🏆 Sponsors</Link>
             <Link to={`/admin/events/${id}/edit`} className="btn btn-outline btn-sm" style={{ textDecoration: 'none' }}>Edit Event</Link>
           </div>
         </div>

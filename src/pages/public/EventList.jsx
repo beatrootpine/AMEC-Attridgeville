@@ -12,7 +12,7 @@ export default function EventList() {
       .from('events')
       .select('*')
       .order('event_date', { ascending: true })
-      .then(({ data, error }) => { console.log('Events query:', { data, error }); setEvents(data || []); setLoading(false) })
+      .then(({ data, error }) => { setEvents(data || []); setLoading(false) })
       .catch(() => setLoading(false))
   }, [])
 

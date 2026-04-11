@@ -12,6 +12,8 @@ import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminEvent from './pages/admin/AdminEvent'
 import AdminEventForm from './pages/admin/AdminEventForm'
 import AdminRegistration from './pages/admin/AdminRegistration'
+import AdminSponsors from './pages/admin/AdminSponsors'
+import SponsorPage from './pages/public/SponsorPage'
 
 function ProtectedRoute({ children }) {
   const { user, isAdmin, loading } = useAuth()
@@ -37,6 +39,7 @@ export default function App() {
       <Route path="/" element={<><Navbar /><EventList /></>} />
       <Route path="/event/:slug" element={<><Navbar /><EventDetail /></>} />
       <Route path="/event/:slug/register" element={<><Navbar /><Register /></>} />
+      <Route path="/event/:slug/sponsor" element={<><Navbar /><SponsorPage /></>} />
       <Route path="/success" element={<><Navbar /><Success /></>} />
       <Route path="/my-registration" element={<><Navbar /><MyRegistration /></>} />
 
@@ -47,6 +50,7 @@ export default function App() {
       <Route path="/admin/events/:id/edit" element={<ProtectedRoute><AdminNavbar /><AdminEventForm /></ProtectedRoute>} />
       <Route path="/admin/events/:id" element={<ProtectedRoute><AdminNavbar /><AdminEvent /></ProtectedRoute>} />
       <Route path="/admin/events/:eventId/registrations/:regId" element={<ProtectedRoute><AdminNavbar /><AdminRegistration /></ProtectedRoute>} />
+      <Route path="/admin/events/:id/sponsors" element={<ProtectedRoute><AdminNavbar /><AdminSponsors /></ProtectedRoute>} />
     </Routes>
   )
 }

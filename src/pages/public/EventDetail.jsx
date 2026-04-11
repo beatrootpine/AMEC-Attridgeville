@@ -88,9 +88,14 @@ export default function EventDetail() {
             {isClosedByDate ? 'The registration deadline for this event has passed.' : 'Registration is currently closed for this event.'}
           </div>
         ) : (
-          <Link to={`/event/${slug}/register`} className="btn btn-primary btn-lg btn-full" style={{ textDecoration: 'none' }}>
-            Register Now →
-          </Link>
+          <>
+            <Link to={`/event/${slug}/register`} className="btn btn-primary btn-lg btn-full" style={{ textDecoration: 'none' }}>
+              Register Now →
+            </Link>
+            <Link to={`/event/${slug}/sponsor`} className="btn btn-gold btn-lg btn-full" style={{ textDecoration: 'none', marginTop: 10 }}>
+              🏆 Become a Sponsor
+            </Link>
+          </>
         )}
       </div>
     </div>
