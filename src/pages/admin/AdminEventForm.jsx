@@ -13,7 +13,7 @@ const defaults = {
   player_fields: [
     { id: 'full_name', label: 'Full Name', type: 'text', required: true, locked: true },
     { id: 'email', label: 'Email', type: 'email', required: false },
-    { id: 'phone', label: 'Phone', type: 'tel', required: false },
+    { id: 'phone', label: 'Phone', type: 'tel', required: true },
     { id: 'handicap', label: 'Handicap', type: 'text', required: false },
     { id: 'shirt_size', label: 'Shirt Size', type: 'select', required: false, options: ['XS','S','M','L','XL','XXL','XXXL'] },
     { id: 'dietary_requirements', label: 'Dietary Requirements', type: 'text', required: false, placeholder: 'e.g. Halaal, Vegetarian' },
