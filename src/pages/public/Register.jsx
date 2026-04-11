@@ -136,7 +136,7 @@ export default function Register() {
       const { error: plErr } = await supabase.from('players').insert(playerInserts)
       if (plErr) throw plErr
 
-      navigate('/success', { state: { regId: reg.id, eventTitle: event.title } })
+      navigate('/success', { state: { regId: reg.id, eventTitle: event.title, event } })
     } catch (err) {
       toast.error(err.message || 'Something went wrong')
     } finally { setSubmitting(false) }
@@ -260,6 +260,11 @@ export default function Register() {
         {/* Payment */}
         <div className="form-section">
           <div className="form-section-title">Payment</div>
+          {event.payment_deadline && (
+            <div style={{ padding: '10px 16px', background: 'rgba(202,138,4,0.08)', border: '1px solid rgba(202,138,4,0.15)', borderRadius: 'var(--radius)', marginBottom: 16, fontSize: '0.85rem', color: '#92400e' }}>
+              ⏰ Payment deadline: <strong>{new Date(event.payment_deadline).toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' })}</strong>
+            </div>
+          )}
           <div style={{ padding: 16, background: 'var(--bg)', borderRadius: 'var(--radius)', marginBottom: 20 }}>
             <div className="flex justify-between items-center">
               <span className="text-muted">Amount Due</span>
@@ -274,6 +279,13 @@ export default function Register() {
               <div><span className="text-muted">Acc No:</span> {event.banking_account_no}</div>
               <div><span className="text-muted">Branch:</span> {event.banking_branch_code}</div>
               {event.banking_reference_note && <div style={{ marginTop: 8, color: 'var(--gold)', fontStyle: 'italic', fontSize: '0.8rem' }}>{event.banking_reference_note}</div>}
+              <div style={{ marginTop: 10, padding: 10, background: 'rgba(89,26,74,0.04)', borderRadius: 'var(--radius)', fontSize: '0.82rem' }}>
+                <strong>Your reference:</strong>{' '}
+                {regType === 'fourball'
+                  ? <span style={{ color: 'var(--purple)' }}>{teamName || 'Your Team Name'}</span>
+                  : <span style={{ color: 'var(--purple)' }}>{contact.name || 'Name & Surname'}</span>
+                }
+              </div>
             </div>
           )}
           <div className="form-group">

@@ -64,7 +64,7 @@ export default function SponsorPage() {
       if (error) throw error
 
       toast.success('Sponsorship enquiry submitted!')
-      navigate('/success', { state: { eventTitle: event.title, isSponsor: true } })
+      navigate('/success', { state: { eventTitle: event.title, isSponsor: true, event } })
     } catch (err) {
       toast.error(err.message || 'Something went wrong')
     } finally { setSubmitting(false) }

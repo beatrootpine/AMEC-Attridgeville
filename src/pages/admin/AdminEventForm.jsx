@@ -10,6 +10,7 @@ const defaults = {
   max_capacity: '', registration_open: true, registration_close_date: '',
   banking_name: '', banking_bank: '', banking_account_no: '', banking_branch_code: '', banking_reference_note: '',
   custom_fields: [],
+  payment_deadline: '',
   player_fields: [
     { id: 'full_name', label: 'Full Name', type: 'text', required: true, locked: true },
     { id: 'email', label: 'Email', type: 'email', required: false },
@@ -121,6 +122,7 @@ export default function AdminEventForm() {
           fourball_price: data.fourball_price || '',
           max_capacity: data.max_capacity || '',
           registration_close_date: data.registration_close_date || '',
+          payment_deadline: data.payment_deadline || '',
           custom_fields: data.custom_fields || [],
           player_fields: (data.player_fields && data.player_fields.length > 0) ? data.player_fields : defaults.player_fields,
         })
@@ -148,6 +150,7 @@ export default function AdminEventForm() {
       fourball_price: Number(form.fourball_price) || 0,
       max_capacity: Number(form.max_capacity) || null,
       registration_close_date: form.registration_close_date || null,
+      payment_deadline: form.payment_deadline || null,
     }
 
     let error
@@ -263,6 +266,11 @@ export default function AdminEventForm() {
               <input className="form-input" type="date" value={form.registration_close_date} onChange={e => set('registration_close_date', e.target.value)} />
               <div className="form-hint">Leave blank for no deadline</div>
             </div>
+            <div className="form-group">
+              <label className="form-label">Payment Deadline</label>
+              <input className="form-input" type="date" value={form.payment_deadline} onChange={e => set('payment_deadline', e.target.value)} />
+              <div className="form-hint">Shown to registrants on the payment section</div>
+            </div>
             <div className="form-group" style={{ display: 'flex', alignItems: 'flex-end', paddingBottom: 4 }}>
               <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
                 <input type="checkbox" checked={form.registration_open} onChange={e => set('registration_open', e.target.checked)} style={{ width: 18, height: 18, accentColor: 'var(--purple)' }} />
@@ -297,7 +305,7 @@ export default function AdminEventForm() {
           </div>
           <div className="form-group" style={{ marginBottom: 0 }}>
             <label className="form-label">Reference Note</label>
-            <input className="form-input" value={form.banking_reference_note} onChange={e => set('banking_reference_note', e.target.value)} placeholder="e.g. Use your surname + GOLF as reference" />
+            <input className="form-input" value={form.banking_reference_note} onChange={e => set('banking_reference_note', e.target.value)} placeholder="e.g. 4-Ball: Team Name / Individual: Name & Surname" />
           </div>
         </div>
 

@@ -1,4 +1,5 @@
 import { useLocation, Link } from 'react-router-dom'
+import { generateICS } from '../../lib/calendar'
 
 export default function Success() {
   const { state } = useLocation()
@@ -17,11 +18,18 @@ export default function Success() {
             }
           </p>
           {state?.regId && (
-            <div style={{ padding: 12, background: 'var(--gold-glow)', borderRadius: 'var(--radius)', marginBottom: 24, fontSize: '0.85rem' }}>
-              <span className="text-muted">Reference:</span> <span className="text-gold" style={{ fontWeight: 600 }}>{state.regId.substring(0, 8).toUpperCase()}</span>
+            <div style={{ padding: 12, background: 'rgba(89,26,74,0.04)', borderRadius: 'var(--radius)', marginBottom: 24, fontSize: '0.85rem' }}>
+              <span className="text-muted">Reference:</span> <span style={{ fontWeight: 700, color: 'var(--purple)', letterSpacing: 0.5 }}>{state.regId.substring(0, 8).toUpperCase()}</span>
             </div>
           )}
-          <Link to="/" className="btn btn-outline">← Back to Events</Link>
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
+            {state?.event && (
+              <button onClick={() => generateICS(state.event)} className="btn btn-primary">
+                📅 Add to Calendar
+              </button>
+            )}
+            <Link to="/" className="btn btn-outline" style={{ textDecoration: 'none' }}>← Back to Events</Link>
+          </div>
         </div>
       </div>
     </div>

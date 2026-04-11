@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { format } from 'date-fns'
+import { generateICS } from '../../lib/calendar'
 
 export default function EventDetail() {
   const { slug } = useParams()
@@ -31,7 +32,16 @@ export default function EventDetail() {
           <span className="text-muted">📅 {format(new Date(event.event_date), 'EEEE, d MMMM yyyy')}</span>
           {event.event_time && <span className="text-muted">🕐 {event.event_time}</span>}
           {event.venue && <span className="text-muted">📍 {event.venue}</span>}
+          <button onClick={() => generateICS(event)} className="btn btn-outline btn-sm" style={{ marginLeft: 'auto' }}>
+            📅 Add to Calendar
+          </button>
         </div>
+
+        {event.payment_deadline && (
+          <div style={{ padding: '10px 16px', borderRadius: 'var(--radius)', marginBottom: 20, background: 'rgba(202,138,4,0.08)', border: '1px solid rgba(202,138,4,0.15)', fontSize: '0.85rem', color: '#92400e' }}>
+            💰 Payment deadline: <strong>{format(new Date(event.payment_deadline), 'd MMMM yyyy')}</strong>
+          </div>
+        )}
 
         {event.registration_close_date && !isClosedByDate && (
           <div style={{

@@ -25,7 +25,7 @@ export default function EventList() {
           <img src="/logo.png" alt="AMEC" className="hero-logo" />
           <div className="hero-subtitle">African Methodist Episcopal Church</div>
           <h1 className="hero-title">Ebenezer Temple</h1>
-          <p className="hero-location">Atteridgeville, Pretoria West</p>
+          <p className="hero-location">93 Sehlogo Street, Atteridgeville, Pretoria West</p>
           <div className="hero-ctas">
             <a href="#events" className="btn btn-gold">View Events ↓</a>
             <Link to="/my-registration" className="btn hero-btn-outline">My Registration</Link>
@@ -85,7 +85,7 @@ export default function EventList() {
           {/* Footer */}
           <div className="site-footer">
             <img src="/logo.png" alt="" style={{ height: 36, opacity: 0.3, marginBottom: 10 }} />
-            <div>AMEC Ebenezer Temple · Atteridgeville, Pretoria West</div>
+            <div>AMEC Ebenezer Temple · 93 Sehlogo Street, Atteridgeville, Pretoria West</div>
             <div style={{ marginTop: 4 }}>Powered by <span style={{ color: 'var(--text-muted)' }}>Beatroot Pineapple</span></div>
           </div>
         </div>
