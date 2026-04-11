@@ -298,7 +298,7 @@ export default function Register() {
               )}
             </div>
             <input id="pop-upload" type="file" accept=".pdf,.jpg,.jpeg,.png" hidden onChange={e => setPaymentFile(e.target.files[0])} />
-            <div className="form-hint">You can also upload proof of payment later</div>
+            <div className="form-hint">You can also upload later via <a href="/my-registration">My Registration</a></div>
           </div>
         </div>
 
