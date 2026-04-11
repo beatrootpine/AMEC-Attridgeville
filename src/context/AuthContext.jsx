@@ -25,23 +25,53 @@ export function AuthProvider({ children }) {
   }
 
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      const u = session?.user ?? null
-      setUser(u)
-      if (u) await checkAdmin(u.id)
-      setLoading(false)
-    })
+    let mounted = true
+
+    const init = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession()
+        
+        // If there's an error getting the session, clear the stale token
+        if (error) {
+          console.warn('Clearing stale auth session:', error.message)
+          await supabase.auth.signOut()
+          if (mounted) { setUser(null); setIsAdmin(false); setLoading(false) }
+          return
+        }
+
+        const u = session?.user ?? null
+        if (mounted) {
+          setUser(u)
+          if (u) await checkAdmin(u.id)
+          setLoading(false)
+        }
+      } catch (err) {
+        console.warn('Auth init error:', err)
+        // Nuclear option — clear everything
+        try { await supabase.auth.signOut() } catch {}
+        if (mounted) { setUser(null); setIsAdmin(false); setLoading(false) }
+      }
+    }
+
+    init()
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (!mounted) return
       const u = session?.user ?? null
       setUser(u)
       if (u) await checkAdmin(u.id)
       else setIsAdmin(false)
     })
-    return () => subscription.unsubscribe()
+
+    return () => { mounted = false; subscription.unsubscribe() }
   }, [])
 
   const signIn = (email, password) => supabase.auth.signInWithPassword({ email, password })
-  const signOut = () => supabase.auth.signOut()
+  const signOut = async () => {
+    await supabase.auth.signOut()
+    setUser(null)
+    setIsAdmin(false)
+  }
 
   return (
     <AuthContext.Provider value={{ user, isAdmin, loading, signIn, signOut }}>
