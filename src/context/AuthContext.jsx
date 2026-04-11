@@ -2,7 +2,6 @@ import { createContext, useContext, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 
 const AuthContext = createContext({})
-
 export const useAuth = () => useContext(AuthContext)
 
 export function AuthProvider({ children }) {
@@ -11,44 +10,34 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   const checkAdmin = async (userId) => {
-    if (!userId) { setIsAdmin(false); return }
+    if (!userId) return false
     try {
-      const { data, error } = await supabase
-        .from('admins')
-        .select('id')
-        .eq('user_id', userId)
-        .single()
-      setIsAdmin(!error && !!data)
-    } catch {
-      setIsAdmin(false)
-    }
+      const { data } = await supabase.from('admins').select('id').eq('user_id', userId).single()
+      return !!data
+    } catch { return false }
   }
 
   useEffect(() => {
     let mounted = true
 
+    // Force loading to end after 5 seconds no matter what
+    const timeout = setTimeout(() => {
+      if (mounted && loading) {
+        console.warn('Auth timeout — forcing load')
+        setLoading(false)
+      }
+    }, 5000)
+
     const init = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession()
-        
-        // If there's an error getting the session, clear the stale token
-        if (error) {
-          console.warn('Clearing stale auth session:', error.message)
-          await supabase.auth.signOut()
+        if (error || !session) {
           if (mounted) { setUser(null); setIsAdmin(false); setLoading(false) }
           return
         }
-
-        const u = session?.user ?? null
-        if (mounted) {
-          setUser(u)
-          if (u) await checkAdmin(u.id)
-          setLoading(false)
-        }
-      } catch (err) {
-        console.warn('Auth init error:', err)
-        // Nuclear option — clear everything
-        try { await supabase.auth.signOut() } catch {}
+        const admin = await checkAdmin(session.user.id)
+        if (mounted) { setUser(session.user); setIsAdmin(admin); setLoading(false) }
+      } catch {
         if (mounted) { setUser(null); setIsAdmin(false); setLoading(false) }
       }
     }
@@ -57,21 +46,21 @@ export function AuthProvider({ children }) {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (!mounted) return
-      const u = session?.user ?? null
-      setUser(u)
-      if (u) await checkAdmin(u.id)
-      else setIsAdmin(false)
+      if (session?.user) {
+        setUser(session.user)
+        const admin = await checkAdmin(session.user.id)
+        setIsAdmin(admin)
+      } else {
+        setUser(null)
+        setIsAdmin(false)
+      }
     })
 
-    return () => { mounted = false; subscription.unsubscribe() }
+    return () => { mounted = false; subscription.unsubscribe(); clearTimeout(timeout) }
   }, [])
 
   const signIn = (email, password) => supabase.auth.signInWithPassword({ email, password })
-  const signOut = async () => {
-    await supabase.auth.signOut()
-    setUser(null)
-    setIsAdmin(false)
-  }
+  const signOut = async () => { await supabase.auth.signOut(); setUser(null); setIsAdmin(false) }
 
   return (
     <AuthContext.Provider value={{ user, isAdmin, loading, signIn, signOut }}>
