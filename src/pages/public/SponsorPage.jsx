@@ -20,6 +20,7 @@ export default function SponsorPage() {
   const [loading, setLoading] = useState(true)
   const [selectedPkg, setSelectedPkg] = useState(null)
   const [form, setForm] = useState({ company: '', name: '', email: '', phone: '', message: '' })
+  const [teams, setTeams] = useState([])
   const [paymentFile, setPaymentFile] = useState(null)
   const [submitting, setSubmitting] = useState(false)
 
@@ -34,9 +35,48 @@ export default function SponsorPage() {
     })
   }, [slug])
 
+  // When package changes, build team slots
+  useEffect(() => {
+    if (!selectedPkg?.includes_fourball || !selectedPkg.fourball_count) {
+      setTeams([])
+      return
+    }
+    const groupSize = event?.fourball_size || 4
+    const newTeams = []
+    for (let t = 0; t < selectedPkg.fourball_count; t++) {
+      const players = []
+      for (let p = 0; p < groupSize; p++) {
+        players.push({ full_name: '', email: '', phone: '' })
+      }
+      newTeams.push({ team_name: '', players })
+    }
+    setTeams(newTeams)
+  }, [selectedPkg, event])
+
+  const updateTeamName = (ti, val) => {
+    const u = [...teams]; u[ti] = { ...u[ti], team_name: val }; setTeams(u)
+  }
+  const updatePlayer = (ti, pi, field, val) => {
+    const u = [...teams]
+    u[ti] = { ...u[ti], players: [...u[ti].players] }
+    u[ti].players[pi] = { ...u[ti].players[pi], [field]: val }
+    setTeams(u)
+  }
+
+  const set = (k, v) => setForm(prev => ({ ...prev, [k]: v }))
+
   const handleSubmit = async () => {
     if (!selectedPkg) return toast.error('Please select a package')
-    if (!form.company || !form.name || !form.email || !form.phone) return toast.error('Please fill in all fields')
+    if (!form.company || !form.name || !form.email || !form.phone) return toast.error('Please fill in all contact fields')
+
+    // Validate team players if applicable
+    for (let ti = 0; ti < teams.length; ti++) {
+      for (let pi = 0; pi < teams[ti].players.length; pi++) {
+        if (!teams[ti].players[pi].full_name) {
+          return toast.error(`Team ${ti + 1}, Player ${pi + 1}: Name is required`)
+        }
+      }
+    }
 
     setSubmitting(true)
     try {
@@ -49,6 +89,7 @@ export default function SponsorPage() {
         proofUrl = path
       }
 
+      // Create sponsor registration
       const { error } = await supabase.from('sponsor_registrations').insert({
         event_id: event.id,
         package_id: selectedPkg.id,
@@ -63,14 +104,40 @@ export default function SponsorPage() {
       })
       if (error) throw error
 
-      toast.success('Sponsorship enquiry submitted!')
+      // Create complimentary registrations for each team
+      for (const team of teams) {
+        const { data: reg, error: regErr } = await supabase.from('registrations').insert({
+          event_id: event.id,
+          registration_type: 'fourball',
+          team_name: team.team_name || `${form.company} Team`,
+          contact_name: form.name,
+          contact_email: form.email.trim().toLowerCase(),
+          contact_phone: form.phone,
+          company: form.company,
+          amount_due: 0,
+          payment_status: 'verified',
+          status: 'confirmed',
+          special_requests: `Complimentary ${event.fourball_label || '4-Ball'} — ${selectedPkg.name} Sponsor`,
+        }).select().single()
+        if (regErr) throw regErr
+
+        const playerInserts = team.players.map((p, i) => ({
+          registration_id: reg.id,
+          full_name: p.full_name,
+          email: p.email,
+          phone: p.phone,
+          player_number: i + 1,
+        }))
+        const { error: plErr } = await supabase.from('players').insert(playerInserts)
+        if (plErr) throw plErr
+      }
+
+      toast.success('Sponsorship submitted!')
       navigate('/success', { state: { eventTitle: event.title, isSponsor: true, event } })
     } catch (err) {
       toast.error(err.message || 'Something went wrong')
     } finally { setSubmitting(false) }
   }
-
-  const set = (k, v) => setForm(prev => ({ ...prev, [k]: v }))
 
   if (loading) return <div className="loading-page"><div className="spinner" /></div>
   if (!event) return <div className="page container"><p>Event not found.</p></div>
@@ -86,7 +153,7 @@ export default function SponsorPage() {
 
         {packages.length === 0 ? (
           <div className="empty-state">
-            <p>No sponsorship packages available for this event yet.</p>
+            <p>No sponsorship packages available yet.</p>
             <Link to={`/event/${slug}`} className="btn btn-outline mt-3" style={{ textDecoration: 'none' }}>← Back to Event</Link>
           </div>
         ) : (
@@ -97,17 +164,13 @@ export default function SponsorPage() {
                 const tc = tierConfig[pkg.tier] || tierConfig.custom
                 const isSelected = selectedPkg?.id === pkg.id
                 return (
-                  <div
-                    key={pkg.id}
-                    onClick={() => setSelectedPkg(pkg)}
-                    style={{
-                      background: isSelected ? tc.bg : '#fff',
-                      border: isSelected ? `2px solid ${tc.color}` : '1px solid var(--border)',
-                      borderRadius: 'var(--radius-lg)', padding: 24, cursor: 'pointer',
-                      boxShadow: isSelected ? '0 4px 16px rgba(0,0,0,0.08)' : 'var(--shadow-sm)',
-                      transition: 'all 0.2s',
-                    }}
-                  >
+                  <div key={pkg.id} onClick={() => setSelectedPkg(pkg)} style={{
+                    background: isSelected ? tc.bg : '#fff',
+                    border: isSelected ? `2px solid ${tc.color}` : '1px solid var(--border)',
+                    borderRadius: 'var(--radius-lg)', padding: 24, cursor: 'pointer',
+                    boxShadow: isSelected ? '0 4px 16px rgba(0,0,0,0.08)' : 'var(--shadow-sm)',
+                    transition: 'all 0.2s',
+                  }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12, marginBottom: 14 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                         <span style={{ fontSize: '1.6rem' }}>{tc.emoji}</span>
@@ -115,7 +178,7 @@ export default function SponsorPage() {
                           <h3 style={{ margin: 0, fontSize: '1.15rem' }}>{pkg.name}</h3>
                           {pkg.includes_fourball && (
                             <div style={{ fontSize: '0.78rem', color: 'var(--green)', fontWeight: 600, marginTop: 2 }}>
-                              🏌️ Includes {pkg.fourball_count} x complimentary 4-ball{pkg.fourball_count > 1 ? 's' : ''}
+                              🏌️ Includes {pkg.fourball_count} x complimentary {event.fourball_label || '4-Ball'}{pkg.fourball_count > 1 ? 's' : ''}
                             </div>
                           )}
                         </div>
@@ -124,7 +187,6 @@ export default function SponsorPage() {
                         R{Number(pkg.price).toLocaleString()}
                       </div>
                     </div>
-
                     {(pkg.benefits || []).length > 0 && (
                       <div style={{ display: 'grid', gap: 6 }}>
                         {pkg.benefits.map((b, i) => (
@@ -135,7 +197,6 @@ export default function SponsorPage() {
                         ))}
                       </div>
                     )}
-
                     {isSelected && (
                       <div style={{ marginTop: 14, padding: '8px 14px', background: tc.color, color: '#fff', borderRadius: 'var(--radius)', textAlign: 'center', fontWeight: 600, fontSize: '0.85rem' }}>
                         Selected ✓
@@ -173,11 +234,54 @@ export default function SponsorPage() {
                       <input className="form-input" type="tel" value={form.phone} onChange={e => set('phone', e.target.value)} />
                     </div>
                   </div>
-                  <div className="form-group">
+                  <div className="form-group" style={{ marginBottom: 0 }}>
                     <label className="form-label">Message / Notes</label>
                     <textarea className="form-textarea" value={form.message} onChange={e => set('message', e.target.value)} placeholder="Any questions or special requests..." />
                   </div>
                 </div>
+
+                {/* Complimentary Team Details */}
+                {teams.length > 0 && (
+                  <>
+                    <div style={{ marginBottom: 12, marginTop: 8 }}>
+                      <h2 style={{ marginBottom: 4 }}>Complimentary <span className="text-gold">{event.fourball_label || '4-Ball'}{teams.length > 1 ? 's' : ''}</span></h2>
+                      <p className="text-muted" style={{ fontSize: '0.85rem' }}>Enter your player details below — {teams.length} x {event.fourball_label || '4-Ball'} included with this package</p>
+                    </div>
+                    {teams.map((team, ti) => (
+                      <div className="form-section" key={ti}>
+                        <div className="form-section-title">
+                          {teams.length > 1 ? `Team ${ti + 1}` : `${event.fourball_label || '4-Ball'} Team`}
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">Team Name</label>
+                          <input className="form-input" value={team.team_name} onChange={e => updateTeamName(ti, e.target.value)} placeholder={`e.g. ${form.company || 'Company'} Team ${teams.length > 1 ? ti + 1 : ''}`} />
+                        </div>
+                        {team.players.map((p, pi) => (
+                          <div key={pi} style={{
+                            padding: 14, border: '1px solid var(--border)', borderRadius: 'var(--radius)',
+                            background: 'var(--bg)', marginBottom: 10,
+                          }}>
+                            <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 8 }}>Player {pi + 1}</div>
+                            <div className="grid-2" style={{ gap: 10 }}>
+                              <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label className="form-label">Full Name *</label>
+                                <input className="form-input" value={p.full_name} onChange={e => updatePlayer(ti, pi, 'full_name', e.target.value)} />
+                              </div>
+                              <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label className="form-label">Email</label>
+                                <input className="form-input" type="email" value={p.email} onChange={e => updatePlayer(ti, pi, 'email', e.target.value)} />
+                              </div>
+                              <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label className="form-label">Phone</label>
+                                <input className="form-input" type="tel" value={p.phone} onChange={e => updatePlayer(ti, pi, 'phone', e.target.value)} />
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+                  </>
+                )}
 
                 {/* Payment */}
                 <div className="form-section">
@@ -210,7 +314,6 @@ export default function SponsorPage() {
                       )}
                     </div>
                     <input id="sponsor-pop" type="file" accept=".pdf,.jpg,.jpeg,.png" hidden onChange={e => setPaymentFile(e.target.files[0])} />
-                    <div className="form-hint">You can also pay later — we'll send you the details</div>
                   </div>
                 </div>
 
