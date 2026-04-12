@@ -11,6 +11,7 @@ const defaults = {
   max_capacity: '', registration_open: true, registration_close_date: '',
   banking_name: '', banking_bank: '', banking_account_no: '', banking_branch_code: '', banking_reference_note: '',
   show_special_requests: true,
+  post_registration_info: '',
   custom_fields: [],
   payment_deadline: '',
   player_fields: [
@@ -174,6 +175,7 @@ export default function AdminEventForm() {
       banking_branch_code: form.banking_branch_code,
       banking_reference_note: form.banking_reference_note,
       show_special_requests: form.show_special_requests,
+      post_registration_info: form.post_registration_info,
       custom_fields: form.custom_fields,
     }
 
@@ -384,10 +386,15 @@ export default function AdminEventForm() {
         {/* Form Options */}
         <div className="form-section">
           <div className="form-section-title">Form Options</div>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', marginBottom: 20 }}>
             <input type="checkbox" checked={form.show_special_requests} onChange={e => set('show_special_requests', e.target.checked)} style={{ width: 18, height: 18, accentColor: 'var(--purple)' }} />
             <span style={{ fontSize: '0.9rem' }}>Show "Special Requests" field on registration form</span>
           </label>
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label className="form-label">Post-Registration Info</label>
+            <textarea className="form-textarea" value={form.post_registration_info} onChange={e => set('post_registration_info', e.target.value)} placeholder="Rules, dress code, directions, etc. Shown to attendees after they register and on their registration page." style={{ minHeight: 160 }} />
+            <div className="form-hint">Supports plain text. Shown on the confirmation page and in "My Registration".</div>
+          </div>
         </div>
 
         {/* Player Form Fields */}

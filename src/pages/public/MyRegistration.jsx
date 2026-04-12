@@ -19,7 +19,7 @@ export default function MyRegistration() {
 
     const { data, error } = await supabase
       .from('registrations')
-      .select('*, events(title, event_date, event_time, venue, venue_address, slug, banking_name, banking_bank, banking_account_no, banking_branch_code, banking_reference_note, payment_deadline), players(*)')
+      .select('*, events(title, event_date, event_time, venue, venue_address, slug, banking_name, banking_bank, banking_account_no, banking_branch_code, banking_reference_note, payment_deadline, post_registration_info), players(*)')
       .eq('contact_email', email.trim().toLowerCase())
       .order('created_at', { ascending: false })
 
@@ -230,6 +230,16 @@ export default function MyRegistration() {
                           {reg.payment_status === 'verified' && (
                             <div style={{ padding: 16, borderRadius: 'var(--radius)', background: '#dcfce7', border: '1px solid #86efac', fontSize: '0.85rem', color: '#15803d', marginBottom: 16 }}>
                               ✅ <strong>Payment verified.</strong> Your registration is confirmed!
+                            </div>
+                          )}
+
+                          {/* Important Info */}
+                          {reg.events?.post_registration_info && (
+                            <div style={{ padding: 16, borderRadius: 'var(--radius)', background: '#fff', border: '1px solid var(--border)', marginBottom: 16 }}>
+                              <div style={{ fontWeight: 700, marginBottom: 10, fontSize: '0.88rem' }}>📋 Important Information</div>
+                              <div style={{ whiteSpace: 'pre-line', fontSize: '0.82rem', lineHeight: 1.7, color: 'var(--text-secondary)' }}>
+                                {reg.events.post_registration_info}
+                              </div>
                             </div>
                           )}
 
