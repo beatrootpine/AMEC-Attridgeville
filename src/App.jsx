@@ -7,13 +7,13 @@ import EventDetail from './pages/public/EventDetail'
 import Register from './pages/public/Register'
 import Success from './pages/public/Success'
 import MyRegistration from './pages/public/MyRegistration'
+import SponsorPage from './pages/public/SponsorPage'
 import AdminLogin from './pages/admin/AdminLogin'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminEvent from './pages/admin/AdminEvent'
 import AdminEventForm from './pages/admin/AdminEventForm'
 import AdminRegistration from './pages/admin/AdminRegistration'
 import AdminSponsors from './pages/admin/AdminSponsors'
-import SponsorPage from './pages/public/SponsorPage'
 
 function ProtectedRoute({ children }) {
   const { user, isAdmin, loading } = useAuth()
@@ -24,7 +24,7 @@ function ProtectedRoute({ children }) {
       <div className="container" style={{ maxWidth: 480, textAlign: 'center', paddingTop: 60 }}>
         <div style={{ fontSize: '3rem', marginBottom: 12 }}>🔒</div>
         <h1 style={{ marginBottom: 8 }}>Access Denied</h1>
-        <p className="text-muted" style={{ marginBottom: 24 }}>Your account is not registered as an admin. Contact an existing admin to be added.</p>
+        <p className="text-muted" style={{ marginBottom: 24 }}>Your account is not registered as an admin.</p>
         <a href="/" className="btn btn-outline">← Back to Home</a>
       </div>
     </div>
@@ -35,7 +35,7 @@ function ProtectedRoute({ children }) {
 export default function App() {
   return (
     <Routes>
-      {/* Public */}
+      {/* Public — no auth dependency */}
       <Route path="/" element={<><Navbar /><EventList /></>} />
       <Route path="/event/:slug" element={<><Navbar /><EventDetail /></>} />
       <Route path="/event/:slug/register" element={<><Navbar /><Register /></>} />
