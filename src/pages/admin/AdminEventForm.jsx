@@ -10,6 +10,7 @@ const defaults = {
   individual_label: 'Individual', fourball_label: '4-Ball', fourball_size: 4,
   max_capacity: '', registration_open: true, registration_close_date: '',
   banking_name: '', banking_bank: '', banking_account_no: '', banking_branch_code: '', banking_reference_note: '',
+  show_special_requests: true,
   custom_fields: [],
   payment_deadline: '',
   player_fields: [
@@ -172,6 +173,7 @@ export default function AdminEventForm() {
       banking_account_no: form.banking_account_no,
       banking_branch_code: form.banking_branch_code,
       banking_reference_note: form.banking_reference_note,
+      show_special_requests: form.show_special_requests,
       custom_fields: form.custom_fields,
     }
 
@@ -377,6 +379,15 @@ export default function AdminEventForm() {
             <label className="form-label">Reference Note</label>
             <input className="form-input" value={form.banking_reference_note} onChange={e => set('banking_reference_note', e.target.value)} placeholder="e.g. 4-Ball: Team Name / Individual: Name & Surname" />
           </div>
+        </div>
+
+        {/* Form Options */}
+        <div className="form-section">
+          <div className="form-section-title">Form Options</div>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+            <input type="checkbox" checked={form.show_special_requests} onChange={e => set('show_special_requests', e.target.checked)} style={{ width: 18, height: 18, accentColor: 'var(--purple)' }} />
+            <span style={{ fontSize: '0.9rem' }}>Show "Special Requests" field on registration form</span>
+          </label>
         </div>
 
         {/* Player Form Fields */}

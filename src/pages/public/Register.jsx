@@ -250,12 +250,14 @@ export default function Register() {
         )}
 
         {/* Special Requests */}
-        <div className="form-section">
-          <div className="form-section-title">Special Requests</div>
-          <div className="form-group" style={{ marginBottom: 0 }}>
-            <textarea className="form-textarea" value={specialRequests} onChange={e => setSpecialRequests(e.target.value)} placeholder="Any special requests or notes..." />
+        {event.show_special_requests !== false && (
+          <div className="form-section">
+            <div className="form-section-title">Special Requests</div>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <textarea className="form-textarea" value={specialRequests} onChange={e => setSpecialRequests(e.target.value)} placeholder="Any special requests or notes..." />
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Payment */}
         <div className="form-section">
