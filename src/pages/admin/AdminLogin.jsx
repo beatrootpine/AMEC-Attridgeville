@@ -1,36 +1,21 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
-import { supabase } from '../../lib/supabase'
+import { Link } from 'react-router-dom'
+import { adminSignIn } from '../../lib/useAdmin'
 import toast from 'react-hot-toast'
 
 export default function AdminLogin() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
-  const navigate = useNavigate()
 
   const handleLogin = async () => {
     if (!email || !password) return toast.error('Enter email and password')
     setLoading(true)
-
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) { toast.error(error.message); setLoading(false); return }
-      if (data?.session) {
-        // Check admin
-        const { data: admin } = await supabase.from('admins').select('id').eq('user_id', data.session.user.id).single()
-        if (!admin) {
-          toast.error('This account is not an admin')
-          await supabase.auth.signOut()
-          setLoading(false)
-          return
-        }
-        toast.success('Signed in!')
-        // Force full reload to reset auth state cleanly
-        window.location.href = '/admin'
-      }
+      await adminSignIn(email, password)
+      window.location.href = '/admin'
     } catch (err) {
-      toast.error(err.message || 'Login failed')
+      toast.error(err.message)
       setLoading(false)
     }
   }

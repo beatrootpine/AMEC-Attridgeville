@@ -1,15 +1,16 @@
 import { useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { Link, useLocation } from 'react-router-dom'
+import { adminSignOut } from '../lib/useAdmin'
 
 export default function AdminNavbar() {
-  const { signOut } = useAuth()
   const location = useLocation()
-  const navigate = useNavigate()
   const isActive = (p) => location.pathname === p ? 'active' : ''
   const [open, setOpen] = useState(false)
 
-  const handleSignOut = async () => { await signOut(); navigate('/admin/login') }
+  const handleSignOut = async () => {
+    await adminSignOut()
+    window.location.href = '/admin/login'
+  }
 
   return (
     <nav className="navbar">

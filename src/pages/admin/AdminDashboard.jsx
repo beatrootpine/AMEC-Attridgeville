@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { authClient } from '../../lib/supabase'
 import { format } from 'date-fns'
 import toast from 'react-hot-toast'
 
@@ -51,7 +52,7 @@ export default function AdminDashboard() {
       // Create the user via Supabase Auth admin invite
       // Since we can't use admin API from client, we sign them up
       // and then add them to the admins table
-      const { data: signUpData, error: signUpErr } = await supabase.auth.signUp({
+      const { data: signUpData, error: signUpErr } = await authClient.auth.signUp({
         email: newAdminEmail.trim().toLowerCase(),
         password: newAdminPassword,
       })
