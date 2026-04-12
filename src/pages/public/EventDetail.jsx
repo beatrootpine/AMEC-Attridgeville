@@ -65,14 +65,14 @@ export default function EventDetail() {
             {(event.registration_type === 'individual' || event.registration_type === 'both') && (
               <div style={{ padding: 20, border: '1px solid var(--border)', borderRadius: 'var(--radius)', textAlign: 'center', background: 'var(--bg)' }}>
                 <div style={{ fontSize: '2rem', marginBottom: 8 }}>🏌️</div>
-                <div style={{ fontWeight: 600, marginBottom: 4 }}>Individual</div>
+                <div style={{ fontWeight: 600, marginBottom: 4 }}>{event.individual_label || 'Individual'}</div>
                 <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', color: 'var(--gold)', fontWeight: 700 }}>R{event.individual_price}</div>
               </div>
             )}
             {(event.registration_type === 'fourball' || event.registration_type === 'both') && (
               <div style={{ padding: 20, border: '1px solid var(--border)', borderRadius: 'var(--radius)', textAlign: 'center', background: 'var(--bg)' }}>
                 <div style={{ fontSize: '2rem', marginBottom: 8 }}>👥</div>
-                <div style={{ fontWeight: 600, marginBottom: 4 }}>4-Ball</div>
+                <div style={{ fontWeight: 600, marginBottom: 4 }}>{event.fourball_label || '4-Ball'}</div>
                 <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', color: 'var(--gold)', fontWeight: 700 }}>R{event.fourball_price}</div>
               </div>
             )}

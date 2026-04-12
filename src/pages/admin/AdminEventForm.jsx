@@ -7,6 +7,7 @@ const defaults = {
   title: '', slug: '', description: '', event_date: '', event_time: '',
   venue: '', venue_address: '', banner_url: '', event_type: 'golf_day',
   registration_type: 'both', individual_price: '', fourball_price: '',
+  individual_label: 'Individual', fourball_label: '4-Ball', fourball_size: 4,
   max_capacity: '', registration_open: true, registration_close_date: '',
   banking_name: '', banking_bank: '', banking_account_no: '', banking_branch_code: '', banking_reference_note: '',
   custom_fields: [],
@@ -120,6 +121,9 @@ export default function AdminEventForm() {
           ...defaults, ...data,
           individual_price: data.individual_price || '',
           fourball_price: data.fourball_price || '',
+          individual_label: data.individual_label || 'Individual',
+          fourball_label: data.fourball_label || '4-Ball',
+          fourball_size: data.fourball_size || 4,
           max_capacity: data.max_capacity || '',
           registration_close_date: data.registration_close_date || '',
           payment_deadline: data.payment_deadline || '',
@@ -157,6 +161,9 @@ export default function AdminEventForm() {
       registration_type: form.registration_type,
       individual_price: Number(form.individual_price) || 0,
       fourball_price: Number(form.fourball_price) || 0,
+      individual_label: form.individual_label || 'Individual',
+      fourball_label: form.fourball_label || '4-Ball',
+      fourball_size: Number(form.fourball_size) || 4,
       max_capacity: Number(form.max_capacity) || null,
       registration_open: form.registration_open,
       registration_close_date: form.registration_close_date || null,
@@ -255,9 +262,9 @@ export default function AdminEventForm() {
             <div className="form-group">
               <label className="form-label">Registration Type</label>
               <select className="form-select" value={form.registration_type} onChange={e => set('registration_type', e.target.value)}>
-                <option value="both">Individual & 4-Ball</option>
+                <option value="both">Individual & Group</option>
                 <option value="individual">Individual Only</option>
-                <option value="fourball">4-Ball Only</option>
+                <option value="fourball">Group Only</option>
               </select>
             </div>
             <div className="form-group">
@@ -274,11 +281,32 @@ export default function AdminEventForm() {
             )}
             {(form.registration_type === 'fourball' || form.registration_type === 'both') && (
               <div className="form-group">
-                <label className="form-label">4-Ball Price (R)</label>
+                <label className="form-label">Group Price (R)</label>
                 <input className="form-input" type="number" value={form.fourball_price} onChange={e => set('fourball_price', e.target.value)} />
               </div>
             )}
           </div>
+          <div className="grid-2">
+            {(form.registration_type === 'individual' || form.registration_type === 'both') && (
+              <div className="form-group">
+                <label className="form-label">Individual Label</label>
+                <input className="form-input" value={form.individual_label} onChange={e => set('individual_label', e.target.value)} placeholder="e.g. Individual, Single Ticket, Per Person" />
+              </div>
+            )}
+            {(form.registration_type === 'fourball' || form.registration_type === 'both') && (
+              <div className="form-group">
+                <label className="form-label">Group Label</label>
+                <input className="form-input" value={form.fourball_label} onChange={e => set('fourball_label', e.target.value)} placeholder="e.g. 4-Ball, Table of 10, Group" />
+              </div>
+            )}
+          </div>
+          {(form.registration_type === 'fourball' || form.registration_type === 'both') && (
+            <div className="form-group" style={{ maxWidth: 200 }}>
+              <label className="form-label">Group Size (people)</label>
+              <input className="form-input" type="number" value={form.fourball_size} onChange={e => set('fourball_size', e.target.value)} min="2" />
+              <div className="form-hint">How many player slots per group</div>
+            </div>
+          )}
           <div className="grid-2">
             <div className="form-group">
               <label className="form-label">Registration Close Date</label>

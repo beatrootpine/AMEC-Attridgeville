@@ -50,7 +50,7 @@ export default function Register() {
 
   useEffect(() => {
     if (!event) return
-    const count = regType === 'fourball' ? 4 : 1
+    const count = regType === 'fourball' ? (event.fourball_size || 4) : 1
     setPlayers(Array.from({ length: count }, () => emptyPlayer()))
   }, [regType, event])
 
@@ -175,8 +175,8 @@ export default function Register() {
                   background: regType === t ? 'rgba(89,26,74,0.04)' : '#fff', color: 'var(--text)',
                   fontFamily: 'var(--font-body)',
                 }}>
-                  <div style={{ fontSize: '1.5rem', marginBottom: 6 }}>{t === 'individual' ? '🏌️' : '👥'}</div>
-                  <div style={{ fontWeight: 600 }}>{t === 'individual' ? 'Individual' : '4-Ball'}</div>
+                  <div style={{ fontSize: '1.5rem', marginBottom: 6 }}>{t === 'individual' ? '🎫' : '👥'}</div>
+                  <div style={{ fontWeight: 600 }}>{t === 'individual' ? (event.individual_label || 'Individual') : (event.fourball_label || '4-Ball')}</div>
                   <div style={{ fontWeight: 700, fontSize: '1.2rem', color: 'var(--gold)', marginTop: 4 }}>
                     R{t === 'individual' ? event.individual_price : event.fourball_price}
                   </div>

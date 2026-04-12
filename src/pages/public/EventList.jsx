@@ -73,7 +73,7 @@ export default function EventList() {
                     <div className="event-price">
                       <div className="event-price-label">From</div>
                       <div className="event-price-value">
-                        R{ev.registration_type === 'fourball' && ev.registration_type !== 'both' ? ev.fourball_price : ev.individual_price}
+                        R{ev.individual_price || ev.fourball_price}
                       </div>
                     </div>
                   </div>
