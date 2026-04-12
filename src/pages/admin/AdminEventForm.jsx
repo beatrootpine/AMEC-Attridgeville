@@ -250,8 +250,31 @@ export default function AdminEventForm() {
             </div>
           </div>
           <div className="form-group">
-            <label className="form-label">Banner Image URL</label>
-            <input className="form-input" value={form.banner_url} onChange={e => set('banner_url', e.target.value)} placeholder="https://..." />
+            <label className="form-label">Banner Image</label>
+            {form.banner_url && (
+              <div style={{ marginBottom: 10, position: 'relative' }}>
+                <img src={form.banner_url} alt="" style={{ width: '100%', maxHeight: 200, objectFit: 'cover', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }} />
+                <button onClick={() => set('banner_url', '')} style={{ position: 'absolute', top: 8, right: 8, background: '#fff', border: '1px solid var(--border)', borderRadius: '50%', width: 28, height: 28, cursor: 'pointer', fontSize: '0.8rem' }}>✕</button>
+              </div>
+            )}
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+              <button type="button" className="btn btn-outline btn-sm" onClick={() => document.getElementById('banner-upload').click()}>
+                📷 Upload Image
+              </button>
+              <span className="text-dim" style={{ fontSize: '0.8rem' }}>or</span>
+              <input className="form-input" value={form.banner_url} onChange={e => set('banner_url', e.target.value)} placeholder="Paste image URL" style={{ flex: 1 }} />
+            </div>
+            <input id="banner-upload" type="file" accept="image/*" hidden onChange={async (e) => {
+              const file = e.target.files[0]
+              if (!file) return
+              const ext = file.name.split('.').pop()
+              const path = `banners/${Date.now()}.${ext}`
+              const { error } = await supabase.storage.from('event-banners').upload(path, file)
+              if (error) { toast.error('Upload failed: ' + error.message); return }
+              const { data: { publicUrl } } = supabase.storage.from('event-banners').getPublicUrl(path)
+              set('banner_url', publicUrl)
+              toast.success('Image uploaded')
+            }} />
           </div>
         </div>
 

@@ -38,7 +38,7 @@ export default function EventDetail() {
         <h1 style={{ marginBottom: 8 }}>{event.title}</h1>
         <div className="flex gap-3 flex-wrap mb-4" style={{ marginTop: 12 }}>
           <span className="text-muted">📅 {format(new Date(event.event_date), 'EEEE, d MMMM yyyy')}</span>
-          {event.event_time && <span className="text-muted">🕐 {event.event_time}</span>}
+          {event.event_time && <span className="text-muted">🕐 {event.event_time.substring(0, 5)}</span>}
           {event.venue && <span className="text-muted">📍 {event.venue}</span>}
           <button onClick={() => generateICS(event)} className="btn btn-outline btn-sm" style={{ marginLeft: 'auto' }}>
             📅 Add to Calendar
