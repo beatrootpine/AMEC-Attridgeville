@@ -8,10 +8,18 @@ export default function EventDetail() {
   const { slug } = useParams()
   const [event, setEvent] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [hasSponsors, setHasSponsors] = useState(false)
 
   useEffect(() => {
     supabase.from('events').select('*').eq('slug', slug).single()
-      .then(({ data }) => { setEvent(data); setLoading(false) })
+      .then(async ({ data }) => {
+        setEvent(data)
+        if (data) {
+          const { count } = await supabase.from('sponsor_packages').select('id', { count: 'exact', head: true }).eq('event_id', data.id)
+          setHasSponsors(count > 0)
+        }
+        setLoading(false)
+      })
   }, [slug])
 
   if (loading) return <div className="loading-page"><div className="spinner" /></div>
@@ -102,9 +110,11 @@ export default function EventDetail() {
             <Link to={`/event/${slug}/register`} className="btn btn-primary btn-lg btn-full" style={{ textDecoration: 'none' }}>
               Register Now →
             </Link>
-            <Link to={`/event/${slug}/sponsor`} className="btn btn-gold btn-lg btn-full" style={{ textDecoration: 'none', marginTop: 10 }}>
-              🏆 Become a Sponsor
-            </Link>
+            {hasSponsors && (
+              <Link to={`/event/${slug}/sponsor`} className="btn btn-gold btn-lg btn-full" style={{ textDecoration: 'none', marginTop: 10 }}>
+                🏆 Become a Sponsor
+              </Link>
+            )}
           </>
         )}
       </div>
