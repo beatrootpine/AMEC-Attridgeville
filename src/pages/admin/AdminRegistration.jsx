@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { supabase } from '../../lib/supabase'
+import { authClient as supabase } from '../../lib/supabase'
 import { format } from 'date-fns'
 import toast from 'react-hot-toast'
 
