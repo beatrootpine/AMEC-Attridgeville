@@ -145,13 +145,32 @@ export default function AdminEventForm() {
 
     setLoading(true)
     const payload = {
-      ...form,
+      title: form.title,
+      slug: form.slug || autoSlug(form.title),
+      description: form.description,
+      event_date: form.event_date,
+      event_time: form.event_time || null,
+      venue: form.venue,
+      venue_address: form.venue_address,
+      banner_url: form.banner_url,
+      event_type: form.event_type,
+      registration_type: form.registration_type,
       individual_price: Number(form.individual_price) || 0,
       fourball_price: Number(form.fourball_price) || 0,
       max_capacity: Number(form.max_capacity) || null,
+      registration_open: form.registration_open,
       registration_close_date: form.registration_close_date || null,
-      payment_deadline: form.payment_deadline || null,
+      banking_name: form.banking_name,
+      banking_bank: form.banking_bank,
+      banking_account_no: form.banking_account_no,
+      banking_branch_code: form.banking_branch_code,
+      banking_reference_note: form.banking_reference_note,
+      custom_fields: form.custom_fields,
     }
+
+    // Only include these if they have values (columns may not exist yet)
+    if (form.player_fields && form.player_fields.length > 0) payload.player_fields = form.player_fields
+    if (form.payment_deadline) payload.payment_deadline = form.payment_deadline
 
     let error
     if (isEdit) {
