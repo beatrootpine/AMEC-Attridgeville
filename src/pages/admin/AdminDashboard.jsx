@@ -111,7 +111,7 @@ export default function AdminDashboard() {
           ))}
         </div>
 
-        {/* Events Table */}
+        {/* Events — card list on mobile, table on desktop */}
         {events.length === 0 ? (
           <div className="empty-state">
             <div className="empty-state-icon">📋</div>
@@ -119,39 +119,77 @@ export default function AdminDashboard() {
             <Link to="/admin/events/new" className="btn btn-primary mt-3" style={{ textDecoration: 'none' }}>Create Your First Event</Link>
           </div>
         ) : (
-          <div className="table-wrap card" style={{ padding: 0, overflow: 'hidden', marginBottom: 32 }}>
-            <table>
-              <thead>
-                <tr>
-                  <th>Event</th>
-                  <th>Date</th>
-                  <th>Registrations</th>
-                  <th>Pending</th>
-                  <th>Confirmed</th>
-                  <th>Status</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {events.map(ev => (
-                  <tr key={ev.id}>
-                    <td style={{ fontWeight: 600 }}>{ev.title}</td>
-                    <td className="text-muted">{format(new Date(ev.event_date), 'd MMM yyyy')}</td>
-                    <td>{ev.stats.total}</td>
-                    <td><span className="badge badge-pending">{ev.stats.pending}</span></td>
-                    <td><span className="badge badge-confirmed">{ev.stats.confirmed}</span></td>
-                    <td><span className={`badge ${ev.registration_open ? 'badge-confirmed' : 'badge-cancelled'}`}>{ev.registration_open ? 'Open' : 'Closed'}</span></td>
-                    <td>
-                      <div className="flex gap-2">
-                        <Link to={`/admin/events/${ev.id}`} className="btn btn-outline btn-sm" style={{ textDecoration: 'none' }}>View</Link>
-                        <Link to={`/admin/events/${ev.id}/edit`} className="btn btn-outline btn-sm" style={{ textDecoration: 'none' }}>Edit</Link>
-                      </div>
-                    </td>
+          <>
+            {/* Desktop table */}
+            <div className="table-wrap card hide-mobile" style={{ padding: 0, overflow: 'hidden', marginBottom: 32 }}>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Event</th>
+                    <th>Date</th>
+                    <th>Registrations</th>
+                    <th>Pending</th>
+                    <th>Confirmed</th>
+                    <th>Status</th>
+                    <th></th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {events.map(ev => (
+                    <tr key={ev.id}>
+                      <td style={{ fontWeight: 600 }}>{ev.title}</td>
+                      <td className="text-muted">{format(new Date(ev.event_date), 'd MMM yyyy')}</td>
+                      <td>{ev.stats.total}</td>
+                      <td><span className="badge badge-pending">{ev.stats.pending}</span></td>
+                      <td><span className="badge badge-confirmed">{ev.stats.confirmed}</span></td>
+                      <td><span className={`badge ${ev.registration_open ? 'badge-confirmed' : 'badge-cancelled'}`}>{ev.registration_open ? 'Open' : 'Closed'}</span></td>
+                      <td>
+                        <div className="flex gap-2">
+                          <Link to={`/admin/events/${ev.id}`} className="btn btn-outline btn-sm" style={{ textDecoration: 'none' }}>View</Link>
+                          <Link to={`/admin/events/${ev.id}/edit`} className="btn btn-outline btn-sm" style={{ textDecoration: 'none' }}>Edit</Link>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile cards */}
+            <div className="show-mobile" style={{ display: 'none', flexDirection: 'column', gap: 12, marginBottom: 32 }}>
+              {events.map(ev => (
+                <div key={ev.id} className="card" style={{ padding: '16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+                    <div style={{ fontWeight: 700, fontSize: '0.95rem', flex: 1, paddingRight: 8 }}>{ev.title}</div>
+                    <span className={`badge ${ev.registration_open ? 'badge-confirmed' : 'badge-cancelled'}`}>
+                      {ev.registration_open ? 'Open' : 'Closed'}
+                    </span>
+                  </div>
+                  <div className="text-muted" style={{ fontSize: '0.8rem', marginBottom: 12 }}>
+                    📅 {format(new Date(ev.event_date), 'd MMM yyyy')}
+                  </div>
+                  <div style={{ display: 'flex', gap: 16, marginBottom: 14 }}>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>{ev.stats.total}</div>
+                      <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Total</div>
+                    </div>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontWeight: 700, fontSize: '1.1rem', color: 'var(--yellow)' }}>{ev.stats.pending}</div>
+                      <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Pending</div>
+                    </div>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontWeight: 700, fontSize: '1.1rem', color: 'var(--green)' }}>{ev.stats.confirmed}</div>
+                      <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Confirmed</div>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <Link to={`/admin/events/${ev.id}`} className="btn btn-outline btn-sm" style={{ textDecoration: 'none', flex: 1, textAlign: 'center' }}>View</Link>
+                    <Link to={`/admin/events/${ev.id}/edit`} className="btn btn-outline btn-sm" style={{ textDecoration: 'none', flex: 1, textAlign: 'center' }}>Edit</Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
 
         {/* Admin Management */}
