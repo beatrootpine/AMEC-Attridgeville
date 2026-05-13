@@ -1,8 +1,20 @@
 import { useEffect, useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { authClient as supabase } from '../../lib/supabase'
 import { format } from 'date-fns'
 import toast from 'react-hot-toast'
+
+function InvoiceLink({ regId }) {
+  const [invId, setInvId] = useState(null)
+  const [checked, setChecked] = useState(false)
+  useEffect(() => {
+    authClient.from('invoices').select('id').eq('registration_id', regId).maybeSingle()
+      .then(({ data }) => { setInvId(data?.id || null); setChecked(true) })
+  }, [regId])
+  if (!checked) return null
+  if (invId) return <Link to={'/admin/invoices/' + invId} className='btn btn-outline btn-sm' style={{ textDecoration: 'none' }}>🧾 Invoice</Link>
+  return null
+}
 
 export default function AdminEvent() {
   const { id } = useParams()
@@ -11,6 +23,9 @@ export default function AdminEvent() {
   const [filter, setFilter] = useState('all')
   const [loading, setLoading] = useState(true)
   const [showEmail, setShowEmail] = useState(false)
+  const [showAddReg, setShowAddReg] = useState(false)
+  const [addingReg, setAddingReg] = useState(false)
+  const [newReg, setNewReg] = useState({ contact_name: '', contact_email: '', contact_phone: '', company: '', registration_type: 'fourball', team_name: '', player1: '', player2: '', player3: '', player4: '' })
   const [emailSubject, setEmailSubject] = useState('')
   const [emailBody, setEmailBody] = useState('')
   const [emailFilter, setEmailFilter] = useState('all')
@@ -25,6 +40,19 @@ export default function AdminEvent() {
     setLoading(false)
   }
 
+  const createInvoice = async (regId, amountDue, paymentDeadline) => {
+    // Check if invoice already exists
+    const { data: existing } = await supabase.from('invoices').select('id').eq('registration_id', regId).single()
+    if (existing) return existing.id
+    const { data: inv } = await supabase.from('invoices').insert({
+      registration_id: regId,
+      amount_due: amountDue,
+      status: 'unpaid',
+      due_date: paymentDeadline || null,
+    }).select().single()
+    return inv?.id
+  }
+
   const updateStatus = async (regId, status) => {
     await supabase.from('registrations').update({ status }).eq('id', regId)
     toast.success(`Registration ${status}`)
@@ -37,6 +65,51 @@ export default function AdminEvent() {
     await supabase.from('registrations').update(updates).eq('id', regId)
     toast.success(`Payment ${payment_status}`)
     loadData()
+  }
+
+  const handleAddReg = async () => {
+    if (!newReg.contact_name || !newReg.contact_email || !newReg.contact_phone) return toast.error('Name, email and phone are required')
+    setAddingReg(true)
+    try {
+      const isFourball = newReg.registration_type === 'fourball'
+      const amountDue = isFourball ? Number(event.fourball_price || 0) : Number(event.individual_price || 0)
+
+      const { data: reg, error: regErr } = await supabase.from('registrations').insert({
+        event_id: id,
+        registration_type: newReg.registration_type,
+        team_name: isFourball ? newReg.team_name : null,
+        contact_name: newReg.contact_name,
+        contact_email: newReg.contact_email.trim().toLowerCase(),
+        contact_phone: newReg.contact_phone,
+        company: newReg.company,
+        amount_due: amountDue,
+        status: 'pending',
+        payment_status: 'pending',
+      }).select().single()
+      if (regErr) throw regErr
+
+      // Insert players
+      const playerNames = [newReg.player1, newReg.player2, newReg.player3, newReg.player4].filter(Boolean)
+      const playersToInsert = isFourball
+        ? playerNames.map((name, i) => ({ registration_id: reg.id, player_number: i + 1, full_name: name || ('Player ' + (i+1)), extra: {} }))
+        : [{ registration_id: reg.id, player_number: 1, full_name: newReg.contact_name, extra: {} }]
+      if (playersToInsert.length) await supabase.from('players').insert(playersToInsert)
+
+      // Create invoice
+      await supabase.from('invoices').insert({
+        registration_id: reg.id,
+        amount_due: amountDue,
+        status: 'unpaid',
+        due_date: event.payment_deadline || null,
+      })
+
+      toast.success('Registration added & invoice created!')
+      setShowAddReg(false)
+      setNewReg({ contact_name: '', contact_email: '', contact_phone: '', company: '', registration_type: 'fourball', team_name: '', player1: '', player2: '', player3: '', player4: '' })
+      loadData()
+    } catch (err) {
+      toast.error(err.message || 'Failed to add registration')
+    } finally { setAddingReg(false) }
   }
 
   // Export CSV
@@ -138,6 +211,7 @@ export default function AdminEvent() {
           <div className="flex gap-2 flex-wrap">
             <button className="btn btn-outline btn-sm" onClick={exportCSV}>📥 Export CSV</button>
             <button className="btn btn-outline btn-sm" onClick={() => setShowEmail(true)}>✉️ Email All</button>
+            <button className="btn btn-outline btn-sm" onClick={() => setShowAddReg(true)}>+ Add Registration</button>
             <Link to={`/admin/events/${id}/sponsors`} className="btn btn-outline btn-sm" style={{ textDecoration: 'none' }}>🏆 Sponsors</Link>
             <Link to={`/admin/events/${id}/edit`} className="btn btn-outline btn-sm" style={{ textDecoration: 'none' }}>Edit Event</Link>
           </div>
@@ -197,6 +271,7 @@ export default function AdminEvent() {
                     <td>
                       <div className="flex gap-2" style={{ flexWrap: 'wrap' }}>
                         <Link to={`/admin/events/${id}/registrations/${r.id}`} className="btn btn-outline btn-sm" style={{ textDecoration: 'none' }}>View</Link>
+                        <InvoiceLink regId={r.id} />
                         {r.payment_status === 'uploaded' && (
                           <>
                             <button className="btn btn-success btn-sm" onClick={() => updatePayment(r.id, 'verified')}>Verify</button>
@@ -215,6 +290,68 @@ export default function AdminEvent() {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {/* Add Registration Modal */}
+        {showAddReg && (
+          <div className='modal-overlay' onClick={() => setShowAddReg(false)}>
+            <div className='modal' onClick={e => e.stopPropagation()} style={{ maxWidth: 580 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                <h2>Add Registration</h2>
+                <button onClick={() => setShowAddReg(false)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: 'var(--text-muted)' }}>✕</button>
+              </div>
+              <div className='form-group'>
+                <label className='form-label'>Type</label>
+                <select className='form-select' value={newReg.registration_type} onChange={e => setNewReg(p => ({ ...p, registration_type: e.target.value }))}>
+                  <option value='fourball'>4-Ball — R{event.fourball_price || 0}</option>
+                  <option value='individual'>Individual — R{event.individual_price || 0}</option>
+                </select>
+              </div>
+              {newReg.registration_type === 'fourball' && (
+                <div className='form-group'>
+                  <label className='form-label'>Team Name</label>
+                  <input className='form-input' value={newReg.team_name} onChange={e => setNewReg(p => ({ ...p, team_name: e.target.value }))} placeholder='e.g. The Eagles' />
+                </div>
+              )}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div className='form-group'>
+                  <label className='form-label'>Contact Name *</label>
+                  <input className='form-input' value={newReg.contact_name} onChange={e => setNewReg(p => ({ ...p, contact_name: e.target.value }))} />
+                </div>
+                <div className='form-group'>
+                  <label className='form-label'>Company</label>
+                  <input className='form-input' value={newReg.company} onChange={e => setNewReg(p => ({ ...p, company: e.target.value }))} />
+                </div>
+                <div className='form-group'>
+                  <label className='form-label'>Email *</label>
+                  <input className='form-input' type='email' value={newReg.contact_email} onChange={e => setNewReg(p => ({ ...p, contact_email: e.target.value }))} />
+                </div>
+                <div className='form-group'>
+                  <label className='form-label'>Phone *</label>
+                  <input className='form-input' type='tel' value={newReg.contact_phone} onChange={e => setNewReg(p => ({ ...p, contact_phone: e.target.value }))} />
+                </div>
+              </div>
+              {newReg.registration_type === 'fourball' && (
+                <>
+                  <div className='form-section-title' style={{ marginTop: 8, marginBottom: 12, fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Player Names</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                    {['player1','player2','player3','player4'].map((p, i) => (
+                      <div className='form-group' key={p}>
+                        <label className='form-label'>Player {i+1}</label>
+                        <input className='form-input' value={newReg[p]} onChange={e => setNewReg(prev => ({ ...prev, [p]: e.target.value }))} placeholder={'Player ' + (i+1) + ' name'} />
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+              <div style={{ marginTop: 8, padding: '10px 14px', background: 'rgba(74,32,128,0.06)', borderRadius: 8, fontSize: '0.85rem', marginBottom: 16 }}>
+                💰 Invoice will be auto-generated for <strong>R{newReg.registration_type === 'fourball' ? (event.fourball_price || 0) : (event.individual_price || 0)}</strong>
+              </div>
+              <button className='btn btn-primary' style={{ width: '100%' }} onClick={handleAddReg} disabled={addingReg}>
+                {addingReg ? 'Adding...' : 'Add Registration & Generate Invoice'}
+              </button>
+            </div>
           </div>
         )}
 

@@ -28,6 +28,9 @@ export default function AdminSponsors() {
   const [benefitText, setBenefitText] = useState('')
   const [saving, setSaving] = useState(false)
   const [event, setEvent] = useState(null)
+  const [showAddSponsorReg, setShowAddSponsorReg] = useState(false)
+  const [addingSponsorReg, setAddingSponsorReg] = useState(false)
+  const [newSponsor, setNewSponsor] = useState({ company_name: '', contact_name: '', contact_email: '', contact_phone: '', package_id: '' })
 
   useEffect(() => { loadData() }, [eventId])
 
@@ -94,6 +97,45 @@ export default function AdminSponsors() {
   }
 
   const set = (k, v) => setForm(prev => ({ ...prev, [k]: v }))
+
+  const handleAddSponsorReg = async () => {
+    if (!newSponsor.contact_name || !newSponsor.contact_email || !newSponsor.package_id) return toast.error('Name, email and package are required')
+    setAddingSponsorReg(true)
+    try {
+      const pkg = packages.find(p => p.id === newSponsor.package_id)
+      if (!pkg) throw new Error('Package not found')
+
+      const { data: sr, error: srErr } = await supabase.from('sponsor_registrations').insert({
+        event_id: eventId,
+        package_id: pkg.id,
+        company_name: newSponsor.company_name,
+        contact_name: newSponsor.contact_name,
+        contact_email: newSponsor.contact_email.trim().toLowerCase(),
+        contact_phone: newSponsor.contact_phone,
+        amount_due: pkg.price,
+        status: 'pending',
+        payment_status: 'pending',
+      }).select().single()
+      if (srErr) throw srErr
+
+      // Generate invoice — store against a registration if fourball included, else create standalone record via notes
+      // For sponsors we store invoice linked via notes field since sponsor_registrations != registrations
+      // We insert into invoices with a null registration_id and note the sponsor reg id
+      await supabase.from('invoices').insert({
+        registration_id: null,
+        amount_due: pkg.price,
+        status: 'unpaid',
+        notes: 'sponsor:' + sr.id + ':' + newSponsor.company_name + ':' + newSponsor.contact_email,
+      })
+
+      toast.success('Sponsor added & invoice created!')
+      setShowAddSponsorReg(false)
+      setNewSponsor({ company_name: '', contact_name: '', contact_email: '', contact_phone: '', package_id: '' })
+      loadData()
+    } catch (err) {
+      toast.error(err.message || 'Failed to add sponsor')
+    } finally { setAddingSponsorReg(false) }
+  }
 
   if (loading) return <div className="loading-page"><div className="spinner" /></div>
 
@@ -244,6 +286,53 @@ export default function AdminSponsors() {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {/* Add Sponsor Registration Modal */}
+        {showAddSponsorReg && (
+          <div className='modal-overlay' onClick={() => setShowAddSponsorReg(false)}>
+            <div className='modal' onClick={e => e.stopPropagation()} style={{ maxWidth: 520 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                <h2>Add Sponsor</h2>
+                <button onClick={() => setShowAddSponsorReg(false)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: 'var(--text-muted)' }}>✕</button>
+              </div>
+              <div className='form-group'>
+                <label className='form-label'>Sponsorship Package *</label>
+                <select className='form-select' value={newSponsor.package_id} onChange={e => setNewSponsor(p => ({ ...p, package_id: e.target.value }))}>
+                  <option value=''>Select package...</option>
+                  {packages.map(pkg => (
+                    <option key={pkg.id} value={pkg.id}>{pkg.name} — R{Number(pkg.price).toLocaleString()}</option>
+                  ))}
+                </select>
+              </div>
+              <div className='form-group'>
+                <label className='form-label'>Company Name</label>
+                <input className='form-input' value={newSponsor.company_name} onChange={e => setNewSponsor(p => ({ ...p, company_name: e.target.value }))} placeholder='Company / Organisation' />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div className='form-group'>
+                  <label className='form-label'>Contact Name *</label>
+                  <input className='form-input' value={newSponsor.contact_name} onChange={e => setNewSponsor(p => ({ ...p, contact_name: e.target.value }))} />
+                </div>
+                <div className='form-group'>
+                  <label className='form-label'>Phone</label>
+                  <input className='form-input' type='tel' value={newSponsor.contact_phone} onChange={e => setNewSponsor(p => ({ ...p, contact_phone: e.target.value }))} />
+                </div>
+              </div>
+              <div className='form-group'>
+                <label className='form-label'>Email *</label>
+                <input className='form-input' type='email' value={newSponsor.contact_email} onChange={e => setNewSponsor(p => ({ ...p, contact_email: e.target.value }))} />
+              </div>
+              {newSponsor.package_id && (
+                <div style={{ padding: '10px 14px', background: 'rgba(74,32,128,0.06)', borderRadius: 8, fontSize: '0.85rem', marginBottom: 16 }}>
+                  💰 Invoice will be auto-generated for <strong>R{Number(packages.find(p => p.id === newSponsor.package_id)?.price || 0).toLocaleString()}</strong>
+                </div>
+              )}
+              <button className='btn btn-primary' style={{ width: '100%' }} onClick={handleAddSponsorReg} disabled={addingSponsorReg}>
+                {addingSponsorReg ? 'Adding...' : 'Add Sponsor & Generate Invoice'}
+              </button>
+            </div>
           </div>
         )}
       </div>

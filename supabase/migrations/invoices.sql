@@ -1,7 +1,7 @@
 -- Invoices table
 CREATE TABLE IF NOT EXISTS invoices (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  registration_id uuid REFERENCES registrations(id) ON DELETE CASCADE UNIQUE,
+  registration_id uuid REFERENCES registrations(id) ON DELETE CASCADE,
   invoice_number text UNIQUE NOT NULL,
   amount_due numeric NOT NULL DEFAULT 0,
   status text NOT NULL DEFAULT 'unpaid' CHECK (status IN ('unpaid', 'paid', 'cancelled')),
