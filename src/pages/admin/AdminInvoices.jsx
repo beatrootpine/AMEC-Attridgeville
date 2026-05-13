@@ -11,7 +11,49 @@ export default function AdminInvoices() {
   const [invoices, setInvoices] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('all')
-  const [sending, setSending] = useState({})
+  const [generating, setGenerating] = useState(false)
+
+  const generateMissingInvoices = async () => {
+    if (!window.confirm('Generate invoices for all registrations that don\'t have one yet?')) return
+    setGenerating(true)
+    try {
+      // Get all registrations
+      const { data: allRegs } = await supabase
+        .from('registrations')
+        .select('id, amount_due, event_id, events(payment_deadline)')
+
+      // Get existing invoice registration_ids
+      const { data: existing } = await supabase
+        .from('invoices')
+        .select('registration_id')
+
+      const existingIds = new Set((existing || []).map(i => i.registration_id))
+      const missing = (allRegs || []).filter(r => !existingIds.has(r.id))
+
+      if (missing.length === 0) {
+        toast.success('All registrations already have invoices!')
+        setGenerating(false)
+        return
+      }
+
+      // Insert invoices one by one (trigger generates invoice number)
+      let created = 0
+      for (const reg of missing) {
+        const { error } = await supabase.from('invoices').insert({
+          registration_id: reg.id,
+          amount_due: reg.amount_due,
+          status: 'unpaid',
+          due_date: reg.events?.payment_deadline || null,
+        })
+        if (!error) created++
+      }
+
+      toast.success(`Generated ${created} invoice${created !== 1 ? 's' : ''}!`)
+      loadInvoices()
+    } catch (err) {
+      toast.error(err.message || 'Failed to generate invoices')
+    } finally { setGenerating(false) }
+  }
   const [stats, setStats] = useState({ total: 0, unpaid: 0, paid: 0, overdue: 0, revenue: 0 })
 
   useEffect(() => { loadInvoices() }, [])
@@ -93,6 +135,9 @@ export default function AdminInvoices() {
       <div className="container">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
           <h1>Invoices</h1>
+          <button className="btn btn-outline btn-sm" onClick={generateMissingInvoices} disabled={generating}>
+            {generating ? 'Generating...' : '⚡ Generate Missing Invoices'}
+          </button>
         </div>
 
         {/* Stats */}
