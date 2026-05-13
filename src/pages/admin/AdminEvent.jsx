@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams, Link, useNavigate } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
 import { authClient as supabase } from '../../lib/supabase'
 import { format } from 'date-fns'
 import toast from 'react-hot-toast'
@@ -8,7 +8,7 @@ function InvoiceLink({ regId }) {
   const [invId, setInvId] = useState(null)
   const [checked, setChecked] = useState(false)
   useEffect(() => {
-    authClient.from('invoices').select('id').eq('registration_id', regId).maybeSingle()
+    supabase.from('invoices').select('id').eq('registration_id', regId).maybeSingle()
       .then(({ data }) => { setInvId(data?.id || null); setChecked(true) })
   }, [regId])
   if (!checked) return null
