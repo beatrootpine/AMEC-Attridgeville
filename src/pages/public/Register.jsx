@@ -136,6 +136,14 @@ export default function Register() {
       const { error: plErr } = await supabase.from('players').insert(playerInserts)
       if (plErr) throw plErr
 
+      // Auto-create invoice
+      await supabase.from('invoices').insert({
+        registration_id: reg.id,
+        amount_due: amountDue,
+        status: 'unpaid',
+        due_date: event.payment_deadline || null,
+      })
+
       navigate('/success', { state: { regId: reg.id, eventTitle: event.title, event } })
     } catch (err) {
       toast.error(err.message || 'Something went wrong')

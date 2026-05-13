@@ -21,6 +21,7 @@ export default function AdminNavbar() {
         </Link>
         <div className="navbar-links nav-desktop-admin">
           <Link to="/admin" className={isActive('/admin')}>Dashboard</Link>
+          <Link to="/admin/invoices" className={location.pathname.startsWith('/admin/invoices') ? 'active' : ''}>Invoices</Link>
           <Link to="/admin/events/new" className={isActive('/admin/events/new')}>New Event</Link>
           <Link to="/">View Site</Link>
           <button onClick={handleSignOut} className="btn btn-outline btn-sm">Sign Out</button>
@@ -32,6 +33,7 @@ export default function AdminNavbar() {
       {open && (
         <div className="nav-mobile-admin" onClick={() => setOpen(false)}>
           <Link to="/admin" className={isActive('/admin')}>Dashboard</Link>
+          <Link to="/admin/invoices" className={location.pathname.startsWith('/admin/invoices') ? 'active' : ''}>Invoices</Link>
           <Link to="/admin/events/new" className={isActive('/admin/events/new')}>New Event</Link>
           <Link to="/">View Site</Link>
           <a href="#" onClick={e => { e.preventDefault(); handleSignOut() }} style={{ color: 'var(--red)' }}>Sign Out</a>

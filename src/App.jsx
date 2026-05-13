@@ -14,6 +14,8 @@ import AdminEvent from './pages/admin/AdminEvent'
 import AdminEventForm from './pages/admin/AdminEventForm'
 import AdminRegistration from './pages/admin/AdminRegistration'
 import AdminSponsors from './pages/admin/AdminSponsors'
+import AdminInvoices from './pages/admin/AdminInvoices'
+import AdminInvoiceView from './pages/admin/AdminInvoiceView'
 
 function ProtectedRoute({ children }) {
   const { user, isAdmin, loading } = useAdmin()
@@ -47,6 +49,8 @@ export default function App() {
       <Route path="/admin/events/:id" element={<ProtectedRoute><AdminNavbar /><AdminEvent /></ProtectedRoute>} />
       <Route path="/admin/events/:eventId/registrations/:regId" element={<ProtectedRoute><AdminNavbar /><AdminRegistration /></ProtectedRoute>} />
       <Route path="/admin/events/:id/sponsors" element={<ProtectedRoute><AdminNavbar /><AdminSponsors /></ProtectedRoute>} />
+      <Route path="/admin/invoices" element={<ProtectedRoute><AdminNavbar /><AdminInvoices /></ProtectedRoute>} />
+      <Route path="/admin/invoices/:id" element={<ProtectedRoute><AdminNavbar /><AdminInvoiceView /></ProtectedRoute>} />
     </Routes>
   )
 }
