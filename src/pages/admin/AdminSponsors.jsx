@@ -31,6 +31,8 @@ export default function AdminSponsors() {
   const [showAddSponsorReg, setShowAddSponsorReg] = useState(false)
   const [addingSponsorReg, setAddingSponsorReg] = useState(false)
   const [newSponsor, setNewSponsor] = useState({ company_name: '', contact_name: '', contact_email: '', contact_phone: '', package_id: '' })
+  const [editReg, setEditReg] = useState(null)
+  const [savingReg, setSavingReg] = useState(false)
 
   useEffect(() => { loadData() }, [eventId])
 
@@ -93,6 +95,24 @@ export default function AdminSponsors() {
   const updateRegStatus = async (regId, updates) => {
     await supabase.from('sponsor_registrations').update(updates).eq('id', regId)
     toast.success('Updated')
+    loadData()
+  }
+
+  const handleSaveReg = async () => {
+    if (!editReg.contact_name || !editReg.contact_email) return toast.error('Name and email are required')
+    setSavingReg(true)
+    const { error } = await supabase.from('sponsor_registrations').update({
+      company_name: editReg.company_name,
+      contact_name: editReg.contact_name,
+      contact_email: editReg.contact_email,
+      contact_phone: editReg.contact_phone,
+      package_id: editReg.package_id,
+      amount_due: editReg.amount_due,
+    }).eq('id', editReg.id)
+    setSavingReg(false)
+    if (error) return toast.error(error.message)
+    toast.success('Sponsor entry updated')
+    setEditReg(null)
     loadData()
   }
 
@@ -250,6 +270,7 @@ export default function AdminSponsors() {
         {/* Sponsor Registrations */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <h2>Sponsor Enquiries ({regs.length})</h2>
+          <button className='btn btn-outline btn-sm' onClick={() => setShowAddSponsorReg(true)}>+ Add Sponsor</button>
         </div>
         {regs.length === 0 ? (
           <div className="card text-center" style={{ padding: 32, color: 'var(--text-muted)' }}>No sponsor registrations yet.</div>
@@ -275,6 +296,7 @@ export default function AdminSponsors() {
                     </td>
                     <td>
                       <div className="flex gap-2" style={{ flexWrap: 'wrap' }}>
+                        <button className="btn btn-outline btn-sm" onClick={() => setEditReg({ ...r, amount_due: r.amount_due })}>Edit</button>
                         {r.status === 'pending' && <button className="btn btn-success btn-sm" onClick={() => updateRegStatus(r.id, { status: 'confirmed' })}>Confirm</button>}
                         {r.payment_status === 'uploaded' && (
                           <button className="btn btn-success btn-sm" onClick={() => updateRegStatus(r.id, { payment_status: 'verified', status: 'confirmed' })}>Verify Pay</button>
@@ -286,6 +308,55 @@ export default function AdminSponsors() {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {/* Edit Sponsor Registration Modal */}
+        {editReg && (
+          <div className='modal-overlay' onClick={() => setEditReg(null)}>
+            <div className='modal' onClick={e => e.stopPropagation()} style={{ maxWidth: 520 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                <h2>Edit Sponsor Entry</h2>
+                <button onClick={() => setEditReg(null)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: 'var(--text-muted)' }}>✕</button>
+              </div>
+              <div className='form-group'>
+                <label className='form-label'>Sponsorship Package</label>
+                <select className='form-select' value={editReg.package_id} onChange={e => {
+                  const pkg = packages.find(p => p.id === e.target.value)
+                  setEditReg(r => ({ ...r, package_id: e.target.value, amount_due: pkg ? pkg.price : r.amount_due }))
+                }}>
+                  {packages.map(pkg => (
+                    <option key={pkg.id} value={pkg.id}>{pkg.name} — R{Number(pkg.price).toLocaleString()}</option>
+                  ))}
+                </select>
+              </div>
+              <div className='form-group'>
+                <label className='form-label'>Amount Due (R)</label>
+                <input className='form-input' type='number' value={editReg.amount_due} onChange={e => setEditReg(r => ({ ...r, amount_due: e.target.value }))} />
+                <div className='form-hint'>Override the package price if needed (e.g. negotiated rate)</div>
+              </div>
+              <div className='form-group'>
+                <label className='form-label'>Company Name</label>
+                <input className='form-input' value={editReg.company_name || ''} onChange={e => setEditReg(r => ({ ...r, company_name: e.target.value }))} />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div className='form-group'>
+                  <label className='form-label'>Contact Name *</label>
+                  <input className='form-input' value={editReg.contact_name || ''} onChange={e => setEditReg(r => ({ ...r, contact_name: e.target.value }))} />
+                </div>
+                <div className='form-group'>
+                  <label className='form-label'>Phone</label>
+                  <input className='form-input' value={editReg.contact_phone || ''} onChange={e => setEditReg(r => ({ ...r, contact_phone: e.target.value }))} />
+                </div>
+              </div>
+              <div className='form-group'>
+                <label className='form-label'>Email *</label>
+                <input className='form-input' type='email' value={editReg.contact_email || ''} onChange={e => setEditReg(r => ({ ...r, contact_email: e.target.value }))} />
+              </div>
+              <button className='btn btn-primary' style={{ width: '100%' }} onClick={handleSaveReg} disabled={savingReg}>
+                {savingReg ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
           </div>
         )}
 
