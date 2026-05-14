@@ -14,6 +14,7 @@ import AdminEvent from './pages/admin/AdminEvent'
 import AdminEventForm from './pages/admin/AdminEventForm'
 import AdminRegistration from './pages/admin/AdminRegistration'
 import AdminSponsors from './pages/admin/AdminSponsors'
+import AdminInvoices from './pages/admin/AdminInvoices'
 import AdminInvoiceView from './pages/admin/AdminInvoiceView'
 
 function ProtectedRoute({ children }) {
