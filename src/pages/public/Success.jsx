@@ -1,8 +1,17 @@
+import { useEffect, useState } from 'react'
 import { useLocation, Link } from 'react-router-dom'
+import { supabase } from '../../lib/supabase'
 import { generateICS } from '../../lib/calendar'
 
 export default function Success() {
   const { state } = useLocation()
+  const [invoiceId, setInvoiceId] = useState(null)
+
+  useEffect(() => {
+    if (!state?.regId) return
+    supabase.from('invoices').select('id').eq('registration_id', state.regId).maybeSingle()
+      .then(({ data }) => { if (data?.id) setInvoiceId(data.id) })
+  }, [state?.regId])
   const info = state?.event?.post_registration_info
 
   return (
@@ -28,6 +37,9 @@ export default function Success() {
               <button onClick={() => generateICS(state.event)} className="btn btn-primary">📅 Add to Calendar</button>
             )}
             <Link to="/my-registration" className="btn btn-outline" style={{ textDecoration: 'none' }}>My Registration</Link>
+            {invoiceId && (
+              <Link to={'/invoice/' + invoiceId} className="btn btn-outline" style={{ textDecoration: 'none' }}>🧾 View Invoice</Link>
+            )}
             <Link to="/" className="btn btn-outline" style={{ textDecoration: 'none' }}>← Events</Link>
           </div>
         </div>

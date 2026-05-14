@@ -11,6 +11,7 @@ export default function MyRegistration() {
   const [loading, setLoading] = useState(false)
   const [expandedId, setExpandedId] = useState(null)
   const [uploading, setUploading] = useState(null)
+  const [invoiceMap, setInvoiceMap] = useState({})
 
   const handleLookup = async () => {
     if (!email.trim()) return toast.error('Please enter your email address')
@@ -25,7 +26,17 @@ export default function MyRegistration() {
 
     setLoading(false)
     if (error) return toast.error('Something went wrong. Please try again.')
-    setRegistrations(data || [])
+    const regs = data || []
+    setRegistrations(regs)
+
+    // Fetch invoices for all registrations
+    if (regs.length > 0) {
+      const regIds = regs.map(r => r.id)
+      const { data: invData } = await supabase.from('invoices').select('id, registration_id').in('registration_id', regIds)
+      const map = {}
+      ;(invData || []).forEach(inv => { map[inv.registration_id] = inv.id })
+      setInvoiceMap(map)
+    }
   }
 
   const handleUploadPOP = async (reg) => {
@@ -248,6 +259,17 @@ export default function MyRegistration() {
                             <button onClick={() => generateICS(reg.events)} className="btn btn-outline btn-sm" style={{ marginBottom: 12 }}>
                               📅 Add to Calendar
                             </button>
+                          )}
+
+                          {/* Invoice download */}
+                          {invoiceMap[reg.id] && (
+                            <Link
+                              to={`/invoice/${invoiceMap[reg.id]}`}
+                              className="btn btn-outline btn-sm"
+                              style={{ textDecoration: 'none', display: 'inline-block', marginBottom: 12, marginLeft: 8 }}
+                            >
+                              🧾 Download Invoice
+                            </Link>
                           )}
 
                           <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
