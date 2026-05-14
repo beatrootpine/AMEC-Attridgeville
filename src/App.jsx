@@ -14,7 +14,6 @@ import AdminEvent from './pages/admin/AdminEvent'
 import AdminEventForm from './pages/admin/AdminEventForm'
 import AdminRegistration from './pages/admin/AdminRegistration'
 import AdminSponsors from './pages/admin/AdminSponsors'
-import InvoiceDownload from './pages/public/InvoiceDownload'
 import AdminInvoiceView from './pages/admin/AdminInvoiceView'
 
 function ProtectedRoute({ children }) {
@@ -41,7 +40,6 @@ export default function App() {
       <Route path="/event/:slug/sponsor" element={<><Navbar /><SponsorPage /></>} />
       <Route path="/success" element={<><Navbar /><Success /></>} />
       <Route path="/my-registration" element={<><Navbar /><MyRegistration /></>} />
-      <Route path="/invoice/:id" element={<><Navbar /><InvoiceDownload /></>} />
 
       <Route path="/admin/login" element={<AdminLogin />} />
       <Route path="/admin" element={<ProtectedRoute><AdminNavbar /><AdminDashboard /></ProtectedRoute>} />

@@ -13,6 +13,108 @@ export default function MyRegistration() {
   const [uploading, setUploading] = useState(null)
   const [invoiceMap, setInvoiceMap] = useState({})
 
+  const printInvoice = (reg, invoice) => {
+    const event = reg.events
+    const paymentRef = reg.registration_type === 'fourball' ? (reg.team_name || reg.contact_name) : reg.contact_name
+    const isOverdue = invoice.status === 'unpaid' && invoice.due_date && new Date(invoice.due_date) < new Date()
+
+    const html = `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Invoice ${invoice.invoice_number}</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; color: #1a1a1a; padding: 40px; background: #fff; }
+  .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; }
+  .logo-area h2 { font-size: 1rem; margin-top: 8px; }
+  .logo-area p { font-size: 0.78rem; color: #666; }
+  .invoice-label { font-size: 2rem; font-weight: 900; color: #591a4a; letter-spacing: -1px; }
+  .invoice-num { font-family: monospace; font-weight: 700; }
+  .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.72rem; font-weight: 700; margin-top: 8px;
+    background: ${invoice.status === 'paid' ? '#dcfce7' : isOverdue ? '#fee2e2' : '#fef9c3'};
+    color: ${invoice.status === 'paid' ? '#15803d' : isOverdue ? '#dc2626' : '#a16207'}; }
+  .meta { display: flex; justify-content: space-between; margin-bottom: 28px; }
+  .meta-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.5px; color: #999; font-weight: 700; margin-bottom: 6px; }
+  .meta-right { text-align: right; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 0; }
+  thead tr { background: #591a4a; color: #fff; }
+  th { padding: 10px 16px; text-align: left; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px; }
+  th:last-child { text-align: right; }
+  td { padding: 16px; border-bottom: 1px solid #eee; font-size: 0.88rem; }
+  td:last-child { text-align: right; font-weight: 600; }
+  .total-row td { background: #f8f4ff; font-weight: 700; }
+  .total-row td:last-child { font-size: 1.3rem; color: #591a4a; font-weight: 900; }
+  .banking { margin-top: 28px; padding: 18px 20px; background: #f9f9f9; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 0.82rem; }
+  .banking-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.5px; color: #999; font-weight: 700; margin-bottom: 12px; }
+  .banking-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 20px; margin-bottom: 14px; }
+  .ref-box { display: inline-block; padding: 8px 16px; background: #591a4a; color: #fff; border-radius: 6px; font-weight: 700; font-size: 0.95rem; }
+  .footer { margin-top: 32px; padding-top: 20px; border-top: 1px solid #eee; font-size: 0.75rem; color: #999; text-align: center; line-height: 1.8; }
+</style></head>
+<body>
+  <div class="header">
+    <div class="logo-area">
+      <h2>AME Church, Ebenezer Temple</h2>
+      <p>Atteridgeville, Pretoria West</p>
+      <p>Non-Profit Organisation</p>
+    </div>
+    <div style="text-align:right">
+      <div class="invoice-label">INVOICE</div>
+      <div class="invoice-num">${invoice.invoice_number}</div>
+      <div class="status-badge">${invoice.status === 'paid' ? '✓ PAID' : isOverdue ? 'OVERDUE' : 'UNPAID'}</div>
+    </div>
+  </div>
+  <div class="meta">
+    <div>
+      <div class="meta-label">Bill To</div>
+      <div style="font-weight:700;font-size:0.95rem">${reg.contact_name}</div>
+      ${reg.company ? '<div>' + reg.company + '</div>' : ''}
+      <div style="color:#666">${reg.contact_email}</div>
+      ${reg.contact_phone ? '<div style="color:#666">' + reg.contact_phone + '</div>' : ''}
+    </div>
+    <div class="meta-right">
+      <div class="meta-label">Invoice Details</div>
+      <div><span style="color:#666">Date: </span>${new Date(invoice.created_at).toLocaleDateString('en-ZA', {day:'numeric',month:'long',year:'numeric'})}</div>
+      ${invoice.due_date ? '<div><span style="color:#666">Due: </span>' + new Date(invoice.due_date).toLocaleDateString('en-ZA', {day:'numeric',month:'long',year:'numeric'}) + '</div>' : ''}
+      ${invoice.paid_at ? '<div style="color:#15803d">Paid: ' + new Date(invoice.paid_at).toLocaleDateString('en-ZA', {day:'numeric',month:'long',year:'numeric'}) + '</div>' : ''}
+    </div>
+  </div>
+  <table>
+    <thead><tr><th>Description</th><th style="text-align:right">Amount</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>
+          <div style="font-weight:600;margin-bottom:4px">${reg.registration_type === 'fourball' ? '4-Ball Entry — ' + (reg.team_name || 'Team') : 'Individual Entry'}</div>
+          <div style="color:#666;font-size:0.8rem">${event?.title || ''}</div>
+          ${event?.event_date ? '<div style="color:#666;font-size:0.78rem">' + new Date(event.event_date).toLocaleDateString('en-ZA', {day:'numeric',month:'long',year:'numeric'}) + ' · ' + (event.venue || 'Centurion Golf Course') + '</div>' : ''}
+        </td>
+        <td>R${Number(invoice.amount_due).toLocaleString()}</td>
+      </tr>
+      <tr class="total-row"><td>Total Due</td><td>R${Number(invoice.amount_due).toLocaleString()}</td></tr>
+    </tbody>
+  </table>
+  ${invoice.status !== 'paid' && event?.banking_name ? `
+  <div class="banking">
+    <div class="banking-label">EFT Banking Details</div>
+    <div class="banking-grid">
+      <div><span style="color:#666">Account Name: </span><strong>${event.banking_name}</strong></div>
+      <div><span style="color:#666">Bank: </span><strong>${event.banking_bank}</strong></div>
+      <div><span style="color:#666">Account No: </span><strong>${event.banking_account_no}</strong></div>
+      <div><span style="color:#666">Branch Code: </span><strong>${event.banking_branch_code}</strong></div>
+    </div>
+    <div style="font-size:0.72rem;color:#999;margin-bottom:8px">USE THIS AS YOUR PAYMENT REFERENCE:</div>
+    <div class="ref-box">${paymentRef}</div>
+  </div>` : ''}
+  <div class="footer">
+    AME Church Ebenezer Temple · Atteridgeville Township, Pretoria West<br/>
+    Fundraising Golf Day — Church Building Project &amp; Community Initiatives<br/>
+    ${invoice.invoice_number}
+  </div>
+</body></html>`
+
+    const w = window.open('', '_blank', 'width=800,height=900')
+    w.document.write(html)
+    w.document.close()
+    w.onload = () => { w.focus(); w.print() }
+  }
+
   const handleLookup = async () => {
     if (!email.trim()) return toast.error('Please enter your email address')
     setLoading(true)
@@ -32,9 +134,12 @@ export default function MyRegistration() {
     // Fetch invoices for all registrations
     if (regs.length > 0) {
       const regIds = regs.map(r => r.id)
-      const { data: invData } = await supabase.from('invoices').select('id, registration_id').in('registration_id', regIds)
+      const { data: invData } = await supabase.from('invoices').select('*').in('registration_id', regIds)
       const map = {}
-      ;(invData || []).forEach(inv => { map[inv.registration_id] = inv.id })
+      ;(invData || []).forEach(inv => {
+        map[inv.registration_id] = inv.id
+        map[inv.registration_id + '_data'] = inv
+      })
       setInvoiceMap(map)
     }
   }
