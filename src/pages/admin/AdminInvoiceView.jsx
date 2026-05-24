@@ -25,6 +25,12 @@ export default function AdminInvoiceView() {
           contact_name, contact_email, contact_phone, company,
           registration_type, team_name, amount_due, status,
           events ( title, event_date, slug, banking_name, banking_bank, banking_account_no, banking_branch_code, banking_reference_note )
+        ),
+        sponsor_registrations (
+          contact_name, contact_email, contact_phone, company_name,
+          amount_due, status, message,
+          sponsor_packages ( name, price ),
+          events ( title, event_date, banking_name, banking_bank, banking_account_no, banking_branch_code )
         )
       `)
       .eq('id', id)
@@ -61,7 +67,7 @@ export default function AdminInvoiceView() {
   }
 
   const sendReminder = async () => {
-    if (!window.confirm(`Send payment reminder to ${invoice.registrations?.contact_email}?`)) return
+    if (!window.confirm(`Send payment reminder to ${contactEmail}?`)) return
     setSending(true)
     try {
       const res = await fetch(`${SUPABASE_URL}/functions/v1/send-reminder`, {
@@ -81,10 +87,17 @@ export default function AdminInvoiceView() {
   if (loading) return <div className="loading-page"><div className="spinner" /></div>
   if (!invoice) return <div className="page container"><p>Invoice not found.</p></div>
 
+  const isSponsor = !!invoice.sponsor_registration_id
   const reg = invoice.registrations
-  const event = reg?.events
+  const sr = invoice.sponsor_registrations
+  const event = isSponsor ? sr?.events : reg?.events
+  const contactName = isSponsor ? sr?.contact_name : reg?.contact_name
+  const contactEmail = isSponsor ? sr?.contact_email : reg?.contact_email
+  const contactPhone = isSponsor ? sr?.contact_phone : reg?.contact_phone
+  const company = isSponsor ? sr?.company_name : reg?.company
   const isOverdue = invoice.status === 'unpaid' && invoice.due_date && new Date(invoice.due_date) < new Date()
-  const paymentRef = reg?.registration_type === 'fourball' ? (reg?.team_name || reg?.contact_name) : reg?.contact_name
+  const paymentRef = isSponsor ? (sr?.company_name || sr?.contact_name) : (reg?.registration_type === 'fourball' ? (reg?.team_name || reg?.contact_name) : reg?.contact_name)
+  const description = isSponsor ? `${sr?.sponsor_packages?.name || 'Sponsorship'} — ${event?.title}` : (reg?.registration_type === 'fourball' ? `4-Ball Entry — ${reg?.team_name || 'Team'}` : 'Individual Entry')
 
   return (
     <>
@@ -146,10 +159,10 @@ export default function AdminInvoiceView() {
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 28, flexWrap: 'wrap', gap: 16 }}>
               <div style={{ fontSize: '0.82rem' }}>
                 <div style={{ fontWeight: 700, marginBottom: 6, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--text-muted)' }}>Bill To</div>
-                <div style={{ fontWeight: 700 }}>{reg?.contact_name}</div>
-                {reg?.company && <div>{reg.company}</div>}
-                <div style={{ color: 'var(--text-muted)' }}>{reg?.contact_email}</div>
-                <div style={{ color: 'var(--text-muted)' }}>{reg?.contact_phone}</div>
+                <div style={{ fontWeight: 700 }}>{contactName}</div>
+                {company && <div>{company}</div>}
+                <div style={{ color: 'var(--text-muted)' }}>{contactEmail}</div>
+                {contactPhone && <div style={{ color: 'var(--text-muted)' }}>{contactPhone}</div>}
               </div>
               <div style={{ fontSize: '0.82rem', textAlign: 'right' }}>
                 <div style={{ fontWeight: 700, marginBottom: 6, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--text-muted)' }}>Dates</div>
@@ -170,9 +183,7 @@ export default function AdminInvoiceView() {
               <tbody>
                 <tr style={{ borderBottom: '1px solid var(--border)' }}>
                   <td style={{ padding: '14px', fontSize: '0.88rem' }}>
-                    <div style={{ fontWeight: 600 }}>
-                      {reg?.registration_type === 'fourball' ? `4-Ball Entry — ${reg?.team_name || 'Team'}` : 'Individual Entry'}
-                    </div>
+                    <div style={{ fontWeight: 600 }}>{description}</div>
                     <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginTop: 2 }}>{event?.title}</div>
                     <div style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>
                       {event?.event_date && format(new Date(event.event_date), 'd MMMM yyyy')} · Centurion Golf Course
