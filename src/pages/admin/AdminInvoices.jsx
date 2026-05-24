@@ -63,6 +63,50 @@ export default function AdminInvoices() {
     } finally { setGenerating(false) }
   }
 
+  const [editAmount, setEditAmount] = useState(null) // { id, invoice_number, amount_due }
+  const [fixingZero, setFixingZero] = useState(false)
+
+  const fixZeroInvoices = async () => {
+    if (!window.confirm('Update all R0 invoices with the correct amount from their event pricing?')) return
+    setFixingZero(true)
+    try {
+      // Get R0 invoices with their registration + event pricing
+      const { data: zeroInvs } = await supabase
+        .from('invoices')
+        .select(`id, registration_id, registrations(registration_type, amount_due, events(fourball_price, individual_price))`)
+        .eq('amount_due', 0)
+        .not('registration_id', 'is', null)
+
+      let fixed = 0
+      for (const inv of zeroInvs || []) {
+        const reg = inv.registrations
+        const event = reg?.events
+        const correctAmount = reg?.registration_type === 'fourball'
+          ? Number(event?.fourball_price || 0)
+          : Number(event?.individual_price || 0)
+        if (correctAmount > 0) {
+          await supabase.from('invoices').update({ amount_due: correctAmount }).eq('id', inv.id)
+          // Also fix the registration amount_due
+          await supabase.from('registrations').update({ amount_due: correctAmount }).eq('id', inv.registration_id)
+          fixed++
+        }
+      }
+      toast.success(`Fixed ${fixed} invoice${fixed !== 1 ? 's' : ''}!`)
+      loadInvoices()
+    } catch (err) {
+      toast.error(err.message || 'Failed to fix invoices')
+    } finally { setFixingZero(false) }
+  }
+
+  const saveEditAmount = async () => {
+    if (!editAmount.amount_due || Number(editAmount.amount_due) < 0) return toast.error('Enter a valid amount')
+    const { error } = await supabase.from('invoices').update({ amount_due: Number(editAmount.amount_due) }).eq('id', editAmount.id)
+    if (error) return toast.error(error.message)
+    toast.success('Amount updated')
+    setEditAmount(null)
+    loadInvoices()
+  }
+
   const markPaid = async (inv) => {
     if (!window.confirm(`Mark ${inv.invoice_number} as paid?`)) return
     const { error } = await supabase.from('invoices').update({ status: 'paid', paid_at: new Date().toISOString() }).eq('id', inv.id)
@@ -105,9 +149,14 @@ export default function AdminInvoices() {
       <div className="container">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
           <h1>Invoices</h1>
-          <button className="btn btn-outline btn-sm" onClick={generateMissingInvoices} disabled={generating}>
-            {generating ? 'Generating...' : '⚡ Generate Missing Invoices'}
-          </button>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <button className="btn btn-outline btn-sm" onClick={fixZeroInvoices} disabled={fixingZero}>
+              {fixingZero ? 'Fixing...' : '🔧 Fix R0 Invoices'}
+            </button>
+            <button className="btn btn-outline btn-sm" onClick={generateMissingInvoices} disabled={generating}>
+              {generating ? 'Generating...' : '⚡ Generate Missing Invoices'}
+            </button>
+          </div>
         </div>
 
         <div className="grid-4 mb-4">
@@ -169,6 +218,7 @@ export default function AdminInvoices() {
                         <td>
                           <div className="flex gap-2" style={{ justifyContent: 'flex-end' }}>
                             <Link to={`/admin/invoices/${inv.id}`} className="btn btn-outline btn-sm" style={{ textDecoration: 'none' }}>View</Link>
+                            <button className="btn btn-outline btn-sm" onClick={() => setEditAmount({ id: inv.id, invoice_number: inv.invoice_number, amount_due: inv.amount_due })}>✏️</button>
                             {inv.status === 'unpaid' && (
                               <>
                                 <button className="btn btn-outline btn-sm" onClick={() => sendReminder(inv)} disabled={sending[inv.id]}>{sending[inv.id] ? '...' : '📧'}</button>
@@ -228,6 +278,30 @@ export default function AdminInvoices() {
           </>
         )}
       </div>
+
+      {/* Edit Amount Modal */}
+      {editAmount && (
+        <div className="modal-overlay" onClick={() => setEditAmount(null)}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 400 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <h2>Edit Amount</h2>
+              <button onClick={() => setEditAmount(null)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: 'var(--text-muted)' }}>✕</button>
+            </div>
+            <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: 16, fontFamily: 'monospace' }}>{editAmount.invoice_number}</div>
+            <div className="form-group">
+              <label className="form-label">Amount Due (R)</label>
+              <input
+                className="form-input"
+                type="number"
+                value={editAmount.amount_due}
+                onChange={e => setEditAmount(a => ({ ...a, amount_due: e.target.value }))}
+                autoFocus
+              />
+            </div>
+            <button className="btn btn-primary" style={{ width: '100%' }} onClick={saveEditAmount}>Save</button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
