@@ -20,14 +20,20 @@ export default function AdminInvoices() {
   useEffect(() => { loadInvoices() }, [])
 
   const loadInvoices = async () => {
-    const { data, error } = await supabase
+    // Try with sponsor join first, fall back if column doesn't exist yet
+    let data, error
+    ;({ data, error } = await supabase
       .from('invoices')
-      .select(`
-        *,
-        registrations ( contact_name, contact_email, company, registration_type, team_name, amount_due, status, events ( title, event_date ) ),
-        sponsor_registrations ( contact_name, contact_email, company_name, amount_due, status, events ( title, event_date ), sponsor_packages ( name ) )
-      `)
-      .order('created_at', { ascending: false })
+      .select(`*, registrations ( contact_name, contact_email, company, registration_type, team_name, amount_due, status, events ( title, event_date ) ), sponsor_registrations ( contact_name, contact_email, company_name, amount_due, status, events ( title, event_date ), sponsor_packages ( name ) )`)
+      .order('created_at', { ascending: false }))
+
+    if (error) {
+      // Fall back without sponsor join (migration not run yet)
+      ;({ data, error } = await supabase
+        .from('invoices')
+        .select(`*, registrations ( contact_name, contact_email, company, registration_type, team_name, amount_due, status, events ( title, event_date ) )`)
+        .order('created_at', { ascending: false }))
+    }
 
     if (error) { toast.error('Failed to load invoices'); return }
 
