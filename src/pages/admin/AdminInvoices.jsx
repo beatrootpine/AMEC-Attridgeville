@@ -146,7 +146,7 @@ export default function AdminInvoices() {
     if (!window.confirm(`Send reminder to ${getEmail(inv)}?`)) return
     setSending(s => ({ ...s, [inv.id]: true }))
     try {
-      const res = await fetch(`${SUPABASE_URL}/functions/v1/send-reminder`, {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/invoice-reminder`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ invoice_id: inv.id }),

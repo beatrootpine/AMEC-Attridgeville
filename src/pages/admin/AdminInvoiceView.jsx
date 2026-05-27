@@ -53,7 +53,7 @@ export default function AdminInvoiceView() {
   const sendInvoiceEmail = async () => {
     setSending(true)
     try {
-      const res = await fetch(`${SUPABASE_URL}/functions/v1/send-invoice`, {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/send-invoice-email`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ invoice_id: id }),
@@ -70,7 +70,7 @@ export default function AdminInvoiceView() {
     if (!window.confirm(`Send payment reminder to ${contactEmail}?`)) return
     setSending(true)
     try {
-      const res = await fetch(`${SUPABASE_URL}/functions/v1/send-reminder`, {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/invoice-reminder`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ invoice_id: id }),
