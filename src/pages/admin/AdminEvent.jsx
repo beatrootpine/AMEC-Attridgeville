@@ -161,6 +161,8 @@ export default function AdminEvent() {
   }
 
   // Bulk email
+  const [sendingEmail, setSendingEmail] = useState(false)
+
   const getEmailRecipients = () => {
     let list = regs
     if (emailFilter === 'confirmed') list = list.filter(r => r.status === 'confirmed')
@@ -169,16 +171,32 @@ export default function AdminEvent() {
     return [...new Set(list.map(r => r.contact_email))]
   }
 
-  const sendBulkEmail = () => {
+  const sendBulkEmail = async () => {
     const recipients = getEmailRecipients()
     if (recipients.length === 0) return toast.error('No recipients match this filter')
     if (!emailSubject.trim()) return toast.error('Please enter a subject')
+    if (!emailBody.trim()) return toast.error('Please enter a message')
+    if (!window.confirm(`Send email to ${recipients.length} recipient${recipients.length !== 1 ? 's' : ''}?`)) return
 
-    // Open default mail client with BCC
-    const mailto = `mailto:?bcc=${recipients.join(',')}&subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`
-    window.open(mailto, '_blank')
-    toast.success(`Opening mail client for ${recipients.length} recipients`)
-    setShowEmail(false)
+    setSendingEmail(true)
+    try {
+      const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
+      const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
+
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/send-event-email`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ recipients, subject: emailSubject, body: emailBody, event_title: event.title }),
+      })
+      const data = await res.json()
+      if (data.error) throw new Error(data.error)
+      toast.success(`Sent to ${data.sent} of ${data.total} recipients!`)
+      setShowEmail(false)
+      setEmailSubject('')
+      setEmailBody('')
+    } catch (err) {
+      toast.error(err.message || 'Failed to send')
+    } finally { setSendingEmail(false) }
   }
 
   const copyEmails = () => {
@@ -385,7 +403,9 @@ export default function AdminEvent() {
               </div>
 
               <div className="flex gap-2">
-                <button className="btn btn-primary" style={{ flex: 1 }} onClick={sendBulkEmail}>Open in Mail Client</button>
+                <button className="btn btn-primary" style={{ flex: 1 }} onClick={sendBulkEmail} disabled={sendingEmail}>
+                  {sendingEmail ? 'Sending...' : `Send to ${getEmailRecipients().length} Recipients`}
+                </button>
                 <button className="btn btn-outline" onClick={copyEmails}>Copy Emails</button>
               </div>
               <div className="form-hint mt-2">This opens your default mail app with all recipients in BCC. You can also copy the email list to paste into any email tool.</div>
