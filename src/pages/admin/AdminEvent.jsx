@@ -183,7 +183,7 @@ export default function AdminEvent() {
       const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
       const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
 
-      const res = await fetch(`${SUPABASE_URL}/functions/v1/send-event-email`, {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/sendgrid-broadcast`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ recipients, subject: emailSubject, body: emailBody, event_title: event.title }),
