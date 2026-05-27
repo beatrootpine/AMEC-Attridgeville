@@ -133,6 +133,8 @@ export default function AdminInvoices() {
       toast.error(err.message || 'Failed to send reminders')
     } finally { setBulkSending(false) }
   }
+
+  const markPaid = async (inv) => {
     if (!window.confirm(`Mark ${inv.invoice_number} as paid?`)) return
     const { error } = await supabase.from('invoices').update({ status: 'paid', paid_at: new Date().toISOString() }).eq('id', inv.id)
     if (error) return toast.error('Failed to update')
