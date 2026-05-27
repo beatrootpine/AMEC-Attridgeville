@@ -110,7 +110,29 @@ export default function AdminInvoices() {
     } finally { setFixingZero(false) }
   }
 
-  const markPaid = async (inv) => {
+  const [bulkSending, setBulkSending] = useState(false)
+  const [bulkResult, setBulkResult] = useState(null)
+
+  const sendBulkReminders = async () => {
+    const unpaidCount = invoices.filter(i => i.status === 'unpaid' && Number(i.amount_due) > 0).length
+    if (!window.confirm(`Send payment reminder emails to all ${unpaidCount} unpaid invoice holders?`)) return
+    setBulkSending(true)
+    setBulkResult(null)
+    try {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/send-bulk-reminder`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      })
+      const data = await res.json()
+      if (data.error) throw new Error(data.error)
+      setBulkResult(data)
+      toast.success(`Sent ${data.sent} of ${data.total} reminders!`)
+      loadInvoices()
+    } catch (err) {
+      toast.error(err.message || 'Failed to send reminders')
+    } finally { setBulkSending(false) }
+  }
     if (!window.confirm(`Mark ${inv.invoice_number} as paid?`)) return
     const { error } = await supabase.from('invoices').update({ status: 'paid', paid_at: new Date().toISOString() }).eq('id', inv.id)
     if (error) return toast.error('Failed to update')
@@ -182,6 +204,9 @@ export default function AdminInvoices() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
           <h1>Invoices</h1>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <button className="btn btn-primary btn-sm" onClick={sendBulkReminders} disabled={bulkSending}>
+              {bulkSending ? 'Sending...' : '📧 Send All Reminders'}
+            </button>
             <button className="btn btn-outline btn-sm" onClick={markComplimentary} disabled={fixingZero}>
               {fixingZero ? 'Marking...' : '🎁 Mark R0 as Complimentary'}
             </button>
@@ -190,6 +215,16 @@ export default function AdminInvoices() {
             </button>
           </div>
         </div>
+
+        {bulkResult && (
+          <div style={{ background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 8, padding: '14px 18px', marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ fontSize: '0.88rem' }}>
+              <strong style={{ color: '#15803d' }}>✓ {bulkResult.sent} reminder{bulkResult.sent !== 1 ? 's' : ''} sent</strong>
+              {bulkResult.sent < bulkResult.total && <span style={{ color: '#666', marginLeft: 8 }}> · {bulkResult.total - bulkResult.sent} failed</span>}
+            </div>
+            <button onClick={() => setBulkResult(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#666', fontSize: '1rem' }}>✕</button>
+          </div>
+        )}
 
         <div className="grid-4 mb-4">
           {[
