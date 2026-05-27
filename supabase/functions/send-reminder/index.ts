@@ -1,7 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const SENDGRID_API_KEY = Deno.env.get('SENDGRID_API_KEY')
-const FROM_EMAIL = 'noreply@amecatteridgeville.co.za'
+const FROM_EMAIL = 'beatrootpine@gmail.com'
 const FROM_NAME = 'AME Church Ebenezer Temple'
 
 // Reminder schedule: send at 3 days, 7 days, 14 days after invoice creation
