@@ -53,6 +53,17 @@ export default function AdminEvent() {
     return inv?.id
   }
 
+  const deleteRegistration = async (reg) => {
+    if (!window.confirm(`Permanently delete ${reg.contact_name}'s registration? This cannot be undone.`)) return
+    // Delete players first, then invoice, then registration
+    await supabase.from('players').delete().eq('registration_id', reg.id)
+    await supabase.from('invoices').delete().eq('registration_id', reg.id)
+    const { error } = await supabase.from('registrations').delete().eq('id', reg.id)
+    if (error) return toast.error(error.message)
+    toast.success('Registration deleted')
+    loadData()
+  }
+
   const updateStatus = async (regId, status) => {
     await supabase.from('registrations').update({ status }).eq('id', regId)
     toast.success(`Registration ${status}`)
@@ -302,6 +313,7 @@ export default function AdminEvent() {
                         {r.status !== 'cancelled' && (
                           <button className="btn btn-danger btn-sm" onClick={() => updateStatus(r.id, 'cancelled')}>Cancel</button>
                         )}
+                        <button className="btn btn-danger btn-sm" style={{ opacity: 0.7 }} onClick={() => deleteRegistration(r)}>🗑️</button>
                       </div>
                     </td>
                   </tr>
