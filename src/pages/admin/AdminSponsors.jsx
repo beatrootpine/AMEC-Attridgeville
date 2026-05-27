@@ -33,6 +33,12 @@ export default function AdminSponsors() {
   const [newSponsor, setNewSponsor] = useState({ company_name: '', contact_name: '', contact_email: '', contact_phone: '', package_id: '' })
   const [editReg, setEditReg] = useState(null)
   const [savingReg, setSavingReg] = useState(false)
+  const [showEmail, setShowEmail] = useState(false)
+  const [emailSubject, setEmailSubject] = useState('')
+  const [emailBody, setEmailBody] = useState('')
+  const [emailFilter, setEmailFilter] = useState('all')
+  const [sendingEmail, setSendingEmail] = useState(false)
+  const [sendingReminders, setSendingReminders] = useState(false)
 
   useEffect(() => { loadData() }, [eventId])
 
@@ -96,6 +102,61 @@ export default function AdminSponsors() {
     await supabase.from('sponsor_registrations').update(updates).eq('id', regId)
     toast.success('Updated')
     loadData()
+  }
+
+  const getEmailRecipients = () => {
+    let list = regs
+    if (emailFilter === 'confirmed') list = list.filter(r => r.status === 'confirmed')
+    if (emailFilter === 'pending') list = list.filter(r => r.status === 'pending')
+    if (emailFilter === 'unpaid') list = list.filter(r => r.payment_status === 'pending')
+    return [...new Set(list.map(r => r.contact_email).filter(Boolean))]
+  }
+
+  const sendBulkEmail = async () => {
+    const recipients = getEmailRecipients()
+    if (recipients.length === 0) return toast.error('No recipients match this filter')
+    if (!emailSubject.trim()) return toast.error('Please enter a subject')
+    if (!emailBody.trim()) return toast.error('Please enter a message')
+    if (!window.confirm(`Send email to ${recipients.length} sponsor${recipients.length !== 1 ? 's' : ''}?`)) return
+    setSendingEmail(true)
+    try {
+      const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
+      const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/sendgrid-broadcast`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ recipients, subject: emailSubject, body: emailBody, event_title: event?.title }),
+      })
+      const data = await res.json()
+      if (data.error) throw new Error(data.error)
+      toast.success(`Sent to ${data.sent} of ${data.total} sponsors!`)
+      setShowEmail(false)
+      setEmailSubject('')
+      setEmailBody('')
+    } catch (err) {
+      toast.error(err.message || 'Failed to send')
+    } finally { setSendingEmail(false) }
+  }
+
+  const sendPaymentReminders = async () => {
+    const unpaid = regs.filter(r => r.payment_status === 'pending' || r.payment_status === 'uploaded')
+    if (unpaid.length === 0) return toast.error('No unpaid sponsors to remind')
+    if (!window.confirm(`Send payment reminders to ${unpaid.length} unpaid sponsor${unpaid.length !== 1 ? 's' : ''}?`)) return
+    setSendingReminders(true)
+    try {
+      const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
+      const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/send-bulk-reminder`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event_id: eventId }),
+      })
+      const data = await res.json()
+      if (data.error) throw new Error(data.error)
+      toast.success(`Sent ${data.sent} payment reminder${data.sent !== 1 ? 's' : ''}!`)
+    } catch (err) {
+      toast.error(err.message || 'Failed to send reminders')
+    } finally { setSendingReminders(false) }
   }
 
   const handleSaveReg = async () => {
@@ -268,9 +329,15 @@ export default function AdminSponsors() {
         )}
 
         {/* Sponsor Registrations */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
           <h2>Sponsor Enquiries ({regs.length})</h2>
-          <button className='btn btn-outline btn-sm' onClick={() => setShowAddSponsorReg(true)}>+ Add Sponsor</button>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <button className='btn btn-outline btn-sm' onClick={sendPaymentReminders} disabled={sendingReminders}>
+              {sendingReminders ? 'Sending...' : '💳 Payment Reminders'}
+            </button>
+            <button className='btn btn-outline btn-sm' onClick={() => setShowEmail(true)}>✉️ Email Sponsors</button>
+            <button className='btn btn-outline btn-sm' onClick={() => setShowAddSponsorReg(true)}>+ Add Sponsor</button>
+          </div>
         </div>
         {regs.length === 0 ? (
           <div className="card text-center" style={{ padding: 32, color: 'var(--text-muted)' }}>No sponsor registrations yet.</div>
@@ -308,6 +375,41 @@ export default function AdminSponsors() {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {/* Email Sponsors Modal */}
+        {showEmail && (
+          <div className='modal-overlay' onClick={() => setShowEmail(false)}>
+            <div className='modal' onClick={e => e.stopPropagation()} style={{ maxWidth: 520 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                <h2>Email Sponsors</h2>
+                <button onClick={() => setShowEmail(false)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: 'var(--text-muted)' }}>✕</button>
+              </div>
+              <div className='form-group'>
+                <label className='form-label'>Send To</label>
+                <select className='form-select' value={emailFilter} onChange={e => setEmailFilter(e.target.value)}>
+                  <option value='all'>All Sponsors ({regs.length})</option>
+                  <option value='confirmed'>Confirmed only ({regs.filter(r => r.status === 'confirmed').length})</option>
+                  <option value='pending'>Pending only ({regs.filter(r => r.status === 'pending').length})</option>
+                  <option value='unpaid'>Unpaid only ({regs.filter(r => r.payment_status === 'pending').length})</option>
+                </select>
+              </div>
+              <div className='form-group'>
+                <label className='form-label'>Subject</label>
+                <input className='form-input' value={emailSubject} onChange={e => setEmailSubject(e.target.value)} placeholder='e.g. Important update — Golf Day 31 July 2026' />
+              </div>
+              <div className='form-group'>
+                <label className='form-label'>Message</label>
+                <textarea className='form-input' rows={6} value={emailBody} onChange={e => setEmailBody(e.target.value)} placeholder='Write your message here...' style={{ resize: 'vertical' }} />
+              </div>
+              <div style={{ padding: '10px 14px', background: 'rgba(89,26,74,0.06)', borderRadius: 8, fontSize: '0.82rem', marginBottom: 16 }}>
+                📨 Will send to <strong>{getEmailRecipients().length}</strong> sponsor{getEmailRecipients().length !== 1 ? 's' : ''} with church email branding
+              </div>
+              <button className='btn btn-primary' style={{ width: '100%' }} onClick={sendBulkEmail} disabled={sendingEmail}>
+                {sendingEmail ? 'Sending...' : `Send to ${getEmailRecipients().length} Sponsor${getEmailRecipients().length !== 1 ? 's' : ''}`}
+              </button>
+            </div>
           </div>
         )}
 
