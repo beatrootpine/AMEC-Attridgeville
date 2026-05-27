@@ -1,6 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
+const SENDGRID_API_KEY = Deno.env.get('SENDGRID_API_KEY')
 const FROM_EMAIL = 'noreply@amecatteridgeville.co.za'
 const FROM_NAME = 'AME Church Ebenezer Temple'
 
@@ -118,14 +118,14 @@ Deno.serve(async (req) => {
 </body>
 </html>`
 
-    const res = await fetch('https://api.resend.com/emails', {
+    const res = await fetch('https://api.sendgrid.com/v3/mail/send', {
       method: 'POST',
-      headers: { 'Authorization': `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+      headers: { 'Authorization': `Bearer ${SENDGRID_API_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        from: `${FROM_NAME} <${FROM_EMAIL}>`,
-        to: [reg.contact_email],
+        personalizations: [{ to: [{ email: reg.contact_email }] }],
+        from: { email: FROM_EMAIL, name: FROM_NAME },
         subject: `Invoice ${invoice.invoice_number} — ${event.title}`,
-        html,
+        content: [{ type: 'text/html', value: html }],
       }),
     })
 
