@@ -367,14 +367,14 @@ export default function MyRegistration() {
                           )}
 
                           {/* Invoice download */}
-                          {invoiceMap[reg.id] && (
-                            <Link
-                              to={`/invoice/${invoiceMap[reg.id]}`}
+                          {invoiceMap[reg.id] && invoiceMap[reg.id + '_data'] && (
+                            <button
                               className="btn btn-outline btn-sm"
-                              style={{ textDecoration: 'none', display: 'inline-block', marginBottom: 12, marginLeft: 8 }}
+                              style={{ marginBottom: 12, marginLeft: 8 }}
+                              onClick={() => printInvoice(reg, invoiceMap[reg.id + '_data'])}
                             >
                               🧾 Download Invoice
-                            </Link>
+                            </button>
                           )}
 
                           <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
