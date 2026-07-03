@@ -15,6 +15,8 @@ export default function AdminInvoices() {
   const [generating, setGenerating] = useState(false)
   const [fixingZero, setFixingZero] = useState(false)
   const [editAmount, setEditAmount] = useState(null)
+  const [editForm, setEditForm] = useState(null)
+  const [savingEdit, setSavingEdit] = useState(false)
   const [stats, setStats] = useState({ total: 0, unpaid: 0, paid: 0, overdue: 0, revenue: 0 })
 
   useEffect(() => { loadInvoices() }, [])
@@ -169,6 +171,41 @@ export default function AdminInvoices() {
     loadInvoices()
   }
 
+  const saveFullEdit = async () => {
+    if (!editForm) return
+    setSavingEdit(true)
+    try {
+      // Update invoice amount
+      await supabase.from('invoices').update({ amount_due: Number(editForm.amount_due) }).eq('id', editForm.invoiceId)
+
+      // Update underlying registration
+      if (editForm.isSponsor) {
+        await supabase.from('sponsor_registrations').update({
+          contact_name: editForm.contact_name,
+          contact_email: editForm.contact_email,
+          contact_phone: editForm.contact_phone,
+          company_name: editForm.company,
+          amount_due: Number(editForm.amount_due),
+        }).eq('id', editForm.regId)
+      } else {
+        await supabase.from('registrations').update({
+          contact_name: editForm.contact_name,
+          contact_email: editForm.contact_email,
+          contact_phone: editForm.contact_phone,
+          company: editForm.company,
+          team_name: editForm.team_name,
+          amount_due: Number(editForm.amount_due),
+        }).eq('id', editForm.regId)
+      }
+
+      toast.success('Invoice details updated')
+      setEditForm(null)
+      loadInvoices()
+    } catch (err) {
+      toast.error(err.message || 'Save failed')
+    } finally { setSavingEdit(false) }
+  }
+
   // Helpers to get display info regardless of reg type
   const getName = (inv) => inv.sponsor_registrations?.contact_name || inv.registrations?.contact_name || '—'
   const getCompany = (inv) => inv.sponsor_registrations?.company_name || inv.registrations?.company || null
@@ -283,7 +320,23 @@ export default function AdminInvoices() {
                               <Link to={`/admin/invoices/${inv.id}`} className="btn btn-outline btn-sm" style={{ textDecoration: 'none' }}>View</Link>
                             )}
                             {inv.status !== 'complimentary' && (
-                              <button className="btn btn-outline btn-sm" onClick={() => setEditAmount({ id: inv.id, invoice_number: inv.invoice_number, amount_due: inv.amount_due })}>✏️</button>
+                              <button className="btn btn-outline btn-sm" onClick={() => {
+                                const reg = inv.registrations || inv.sponsor_registrations
+                                setEditForm({
+                                  invoiceId: inv.id,
+                                  invoice_number: inv.invoice_number,
+                                  amount_due: inv.amount_due,
+                                  isSponsor: !!inv.sponsor_registrations,
+                                  regId: inv.registration_id || inv.sponsor_registration_id,
+                                  contact_name: reg?.contact_name || '',
+                                  contact_email: reg?.contact_email || '',
+                                  contact_phone: reg?.contact_phone || '',
+                                  company: inv.sponsor_registrations ? reg?.company_name || '' : reg?.company || '',
+                                  team_name: reg?.team_name || '',
+                                  registration_type: reg?.registration_type || '',
+                                  package_name: inv.sponsor_registrations?.sponsor_packages?.name || '',
+                                })
+                              }}>✏️</button>
                             )}
                             {inv.status === 'unpaid' && (
                               <>
@@ -336,19 +389,45 @@ export default function AdminInvoices() {
         )}
       </div>
 
-      {editAmount && (
-        <div className="modal-overlay" onClick={() => setEditAmount(null)}>
-          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 400 }}>
+      {editForm && (
+        <div className="modal-overlay" onClick={() => setEditForm(null)}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 520 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <h2>Edit Amount</h2>
-              <button onClick={() => setEditAmount(null)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: 'var(--text-muted)' }}>✕</button>
+              <h2>Edit Invoice Details</h2>
+              <button onClick={() => setEditForm(null)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: 'var(--text-muted)' }}>✕</button>
             </div>
-            <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: 16, fontFamily: 'monospace' }}>{editAmount.invoice_number}</div>
+            <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: 16, fontFamily: 'monospace' }}>{editForm.invoice_number}</div>
+            <div className="form-group">
+              <label className="form-label">{editForm.isSponsor ? 'Company Name' : 'Company'}</label>
+              <input className="form-input" value={editForm.company} onChange={e => setEditForm(f => ({ ...f, company: e.target.value }))} />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div className="form-group">
+                <label className="form-label">Contact Name</label>
+                <input className="form-input" value={editForm.contact_name} onChange={e => setEditForm(f => ({ ...f, contact_name: e.target.value }))} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Phone</label>
+                <input className="form-input" value={editForm.contact_phone} onChange={e => setEditForm(f => ({ ...f, contact_phone: e.target.value }))} />
+              </div>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Email</label>
+              <input className="form-input" type="email" value={editForm.contact_email} onChange={e => setEditForm(f => ({ ...f, contact_email: e.target.value }))} />
+            </div>
+            {!editForm.isSponsor && editForm.registration_type === 'fourball' && (
+              <div className="form-group">
+                <label className="form-label">Team Name</label>
+                <input className="form-input" value={editForm.team_name} onChange={e => setEditForm(f => ({ ...f, team_name: e.target.value }))} />
+              </div>
+            )}
             <div className="form-group">
               <label className="form-label">Amount Due (R)</label>
-              <input className="form-input" type="number" value={editAmount.amount_due} onChange={e => setEditAmount(a => ({ ...a, amount_due: e.target.value }))} autoFocus />
+              <input className="form-input" type="number" value={editForm.amount_due} onChange={e => setEditForm(f => ({ ...f, amount_due: e.target.value }))} />
             </div>
-            <button className="btn btn-primary" style={{ width: '100%' }} onClick={saveEditAmount}>Save</button>
+            <button className="btn btn-primary" style={{ width: '100%' }} onClick={saveFullEdit} disabled={savingEdit}>
+              {savingEdit ? 'Saving...' : 'Save Changes'}
+            </button>
           </div>
         </div>
       )}
