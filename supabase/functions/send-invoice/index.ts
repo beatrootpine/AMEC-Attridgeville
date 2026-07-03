@@ -15,7 +15,6 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
     )
 
-    // Fetch invoice with registration + event details
     const { data: invoice, error } = await supabase
       .from('invoices')
       .select(`
@@ -24,6 +23,12 @@ Deno.serve(async (req) => {
           contact_name, contact_email, contact_phone, company,
           registration_type, team_name, amount_due,
           events ( title, event_date, banking_name, banking_bank, banking_account_no, banking_branch_code )
+        ),
+        sponsor_registrations (
+          contact_name, contact_email, contact_phone, company_name,
+          amount_due,
+          sponsor_packages ( name, price ),
+          events ( title, event_date, banking_name, banking_bank, banking_account_no, banking_branch_code )
         )
       `)
       .eq('id', invoice_id)
@@ -31,8 +36,24 @@ Deno.serve(async (req) => {
 
     if (error || !invoice) throw new Error('Invoice not found')
 
+    const isSponsor = !!invoice.sponsor_registration_id
     const reg = invoice.registrations
-    const event = reg.events
+    const sr = invoice.sponsor_registrations
+
+    if (!isSponsor && !reg) throw new Error('Registration not found')
+    if (isSponsor && !sr) throw new Error('Sponsor registration not found')
+
+    const contactName = isSponsor ? sr.contact_name : reg.contact_name
+    const contactEmail = isSponsor ? sr.contact_email : reg.contact_email
+    const company = isSponsor ? sr.company_name : reg.company
+    const event = isSponsor ? sr.events : reg.events
+    const paymentRef = isSponsor
+      ? (sr.company_name || sr.contact_name)
+      : (reg.registration_type === 'fourball' ? (reg.team_name || reg.contact_name) : reg.contact_name)
+    const description = isSponsor
+      ? `${sr.sponsor_packages?.name || 'Sponsorship'} — ${event.title}`
+      : (reg.registration_type === 'fourball' ? `4-Ball Entry — ${reg.team_name || 'Team'}` : 'Individual Entry')
+
     const eventDate = new Date(event.event_date).toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' })
     const dueDate = invoice.due_date
       ? new Date(invoice.due_date).toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' })
@@ -44,7 +65,7 @@ Deno.serve(async (req) => {
 <head><meta charset="utf-8"><style>
   body { font-family: Arial, sans-serif; color: #1a1a1a; margin: 0; padding: 0; background: #f4f4f4; }
   .wrapper { max-width: 600px; margin: 32px auto; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-  .header { background: #4a2080; color: #fff; padding: 32px 40px; }
+  .header { background: #591a4a; color: #fff; padding: 32px 40px; }
   .header h1 { margin: 0 0 4px; font-size: 1.4rem; }
   .header p { margin: 0; opacity: 0.8; font-size: 0.9rem; }
   .body { padding: 32px 40px; }
@@ -53,25 +74,25 @@ Deno.serve(async (req) => {
   .invoice-meta strong { color: #1a1a1a; display: block; font-size: 1rem; }
   .divider { border: none; border-top: 1px solid #eee; margin: 20px 0; }
   .line-item { display: flex; justify-content: space-between; padding: 10px 0; font-size: 0.9rem; }
-  .total-row { display: flex; justify-content: space-between; padding: 16px 0; font-weight: 700; font-size: 1.1rem; border-top: 2px solid #4a2080; color: #4a2080; }
-  .banking { background: #f8f4ff; border: 1px solid #d4b8f0; border-radius: 6px; padding: 16px 20px; margin: 24px 0; font-size: 0.85rem; }
+  .total-row { display: flex; justify-content: space-between; padding: 16px 0; font-weight: 700; font-size: 1.1rem; border-top: 2px solid #591a4a; color: #591a4a; }
+  .banking { background: #faf5f8; border: 1px solid #e0c8d8; border-radius: 6px; padding: 16px 20px; margin: 24px 0; font-size: 0.85rem; }
   .banking h3 { margin: 0 0 10px; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; color: #666; }
   .banking p { margin: 4px 0; }
-  .ref-box { background: #4a2080; color: #fff; border-radius: 4px; padding: 8px 14px; display: inline-block; margin-top: 10px; font-weight: 700; font-size: 0.9rem; }
+  .ref-box { background: #591a4a; color: #fff; border-radius: 4px; padding: 8px 14px; display: inline-block; margin-top: 10px; font-weight: 700; font-size: 0.9rem; }
   .footer { background: #f9f9f9; padding: 20px 40px; font-size: 0.78rem; color: #999; text-align: center; }
 </style></head>
 <body>
 <div class="wrapper">
   <div class="header">
     <h1>Invoice ${invoice.invoice_number}</h1>
-    <p>AME Church, Ebenezer Temple — Fundraising Golf Day</p>
+    <p>AME Church, Ebenezer Temple${isSponsor ? ' — Sponsorship' : ''}</p>
   </div>
   <div class="body">
     <div class="invoice-meta">
       <div>
         <div>Billed To</div>
-        <strong>${reg.contact_name}</strong>
-        ${reg.company ? `<span style="color:#666;font-size:0.85rem">${reg.company}</span>` : ''}
+        <strong>${contactName}</strong>
+        ${company ? `<span style="color:#666;font-size:0.85rem">${company}</span>` : ''}
       </div>
       <div style="text-align:right">
         <div>Invoice Date</div>
@@ -82,12 +103,11 @@ Deno.serve(async (req) => {
     </div>
     <hr class="divider">
     <div class="line-item">
-      <span>${reg.registration_type === 'fourball' ? `4-Ball Entry — ${reg.team_name || 'Team'}` : 'Individual Entry'} · ${event.title}</span>
-      <span>R${Number(reg.amount_due).toLocaleString()}</span>
+      <span>${description} · ${event.title}</span>
+      <span>R${Number(invoice.amount_due).toLocaleString()}</span>
     </div>
     <div class="line-item" style="color:#666;font-size:0.82rem">
       <span>Event Date: ${eventDate}</span>
-      <span>Centurion Golf Course</span>
     </div>
     <div class="total-row">
       <span>Total Due</span>
@@ -101,18 +121,18 @@ Deno.serve(async (req) => {
       <p><strong>Account No:</strong> ${event.banking_account_no}</p>
       <p><strong>Branch Code:</strong> ${event.banking_branch_code}</p>
       <p style="margin-top:10px;color:#666;font-size:0.8rem">Use this as your payment reference:</p>
-      <div class="ref-box">${reg.registration_type === 'fourball' ? (reg.team_name || 'Team Name') : reg.contact_name}</div>
+      <div class="ref-box">${paymentRef}</div>
     </div>
     ` : ''}
     <p style="font-size:0.85rem;color:#666;margin-top:16px">
       Once payment is made, please upload your proof of payment at 
-      <a href="https://amecatteridgeville.vercel.app/my-registration" style="color:#4a2080">My Registration</a> 
+      <a href="https://amecatteridgeville.vercel.app/my-registration" style="color:#591a4a">My Registration</a> 
       or reply to this email.
     </p>
   </div>
   <div class="footer">
-    AME Church Ebenezer Temple · Atteridgeville, Pretoria West<br>
-    Non-Profit Organisation · Fundraising Golf Day ${new Date().getFullYear()}
+    AME Church Ebenezer Temple · 93 Sehlogo Street, Atteridgeville, Pretoria West<br>
+    Non-Profit Organisation · ${new Date().getFullYear()}
   </div>
 </div>
 </body>
@@ -122,7 +142,7 @@ Deno.serve(async (req) => {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${SENDGRID_API_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        personalizations: [{ to: [{ email: reg.contact_email }] }],
+        personalizations: [{ to: [{ email: contactEmail }] }],
         from: { email: FROM_EMAIL, name: FROM_NAME },
         subject: `Invoice ${invoice.invoice_number} — ${event.title}`,
         content: [{ type: 'text/html', value: html }],
@@ -131,7 +151,7 @@ Deno.serve(async (req) => {
 
     if (!res.ok) {
       const err = await res.text()
-      throw new Error(`Resend error: ${err}`)
+      throw new Error(`SendGrid error: ${err}`)
     }
 
     return new Response(JSON.stringify({ success: true }), {
