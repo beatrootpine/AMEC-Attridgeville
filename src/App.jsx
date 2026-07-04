@@ -16,6 +16,8 @@ import AdminRegistration from './pages/admin/AdminRegistration'
 import AdminSponsors from './pages/admin/AdminSponsors'
 import AdminInvoices from './pages/admin/AdminInvoices'
 import AdminInvoiceView from './pages/admin/AdminInvoiceView'
+import AdminRaffle from './pages/admin/AdminRaffle'
+import RafflePage from './pages/public/RafflePage'
 
 function ProtectedRoute({ children }) {
   const { user, isAdmin, loading } = useAdmin()
@@ -39,6 +41,7 @@ export default function App() {
       <Route path="/event/:slug" element={<><Navbar /><EventDetail /></>} />
       <Route path="/event/:slug/register" element={<><Navbar /><Register /></>} />
       <Route path="/event/:slug/sponsor" element={<><Navbar /><SponsorPage /></>} />
+      <Route path="/event/:slug/raffle" element={<><Navbar /><RafflePage /></>} />
       <Route path="/success" element={<><Navbar /><Success /></>} />
       <Route path="/my-registration" element={<><Navbar /><MyRegistration /></>} />
 
@@ -49,6 +52,7 @@ export default function App() {
       <Route path="/admin/events/:id" element={<ProtectedRoute><AdminNavbar /><AdminEvent /></ProtectedRoute>} />
       <Route path="/admin/events/:eventId/registrations/:regId" element={<ProtectedRoute><AdminNavbar /><AdminRegistration /></ProtectedRoute>} />
       <Route path="/admin/events/:id/sponsors" element={<ProtectedRoute><AdminNavbar /><AdminSponsors /></ProtectedRoute>} />
+      <Route path="/admin/events/:id/raffle" element={<ProtectedRoute><AdminNavbar /><AdminRaffle /></ProtectedRoute>} />
       <Route path="/admin/invoices" element={<ProtectedRoute><AdminNavbar /><AdminInvoices /></ProtectedRoute>} />
       <Route path="/admin/invoices/:id" element={<ProtectedRoute><AdminNavbar /><AdminInvoiceView /></ProtectedRoute>} />
     </Routes>

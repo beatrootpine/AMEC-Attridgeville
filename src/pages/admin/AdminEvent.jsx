@@ -242,6 +242,7 @@ export default function AdminEvent() {
             <button className="btn btn-outline btn-sm" onClick={() => setShowEmail(true)}>✉️ Email All</button>
             <button className="btn btn-outline btn-sm" onClick={() => setShowAddReg(true)}>+ Add Registration</button>
             <Link to={`/admin/events/${id}/sponsors`} className="btn btn-outline btn-sm" style={{ textDecoration: 'none' }}>🏆 Sponsors</Link>
+            <Link to={`/admin/events/${id}/raffle`} className="btn btn-outline btn-sm" style={{ textDecoration: 'none' }}>🎟️ Raffle</Link>
             <Link to={`/admin/events/${id}/edit`} className="btn btn-outline btn-sm" style={{ textDecoration: 'none' }}>Edit Event</Link>
           </div>
         </div>

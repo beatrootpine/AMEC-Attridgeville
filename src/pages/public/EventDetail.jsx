@@ -9,6 +9,7 @@ export default function EventDetail() {
   const [event, setEvent] = useState(null)
   const [loading, setLoading] = useState(true)
   const [hasSponsors, setHasSponsors] = useState(false)
+  const [hasRaffle, setHasRaffle] = useState(false)
 
   useEffect(() => {
     supabase.from('events').select('*').eq('slug', slug).single()
@@ -17,6 +18,8 @@ export default function EventDetail() {
         if (data) {
           const { count } = await supabase.from('sponsor_packages').select('id', { count: 'exact', head: true }).eq('event_id', data.id)
           setHasSponsors(count > 0)
+          const { count: rCount } = await supabase.from('raffles').select('id', { count: 'exact', head: true }).eq('event_id', data.id).eq('is_active', true)
+          setHasRaffle(rCount > 0)
         }
         setLoading(false)
       })
@@ -113,6 +116,11 @@ export default function EventDetail() {
             {hasSponsors && (
               <Link to={`/event/${slug}/sponsor`} className="btn btn-gold btn-lg btn-full" style={{ textDecoration: 'none', marginTop: 10 }}>
                 🏆 Become a Sponsor
+              </Link>
+            )}
+            {hasRaffle && (
+              <Link to={`/event/${slug}/raffle`} className="btn btn-outline btn-lg btn-full" style={{ textDecoration: 'none', marginTop: 10 }}>
+                🎟️ Buy Raffle Tickets
               </Link>
             )}
           </>
