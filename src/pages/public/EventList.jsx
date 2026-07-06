@@ -5,12 +5,18 @@ import { format } from 'date-fns'
 
 export default function EventList() {
   const [events, setEvents] = useState([])
+  const [raffles, setRaffles] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    supabase.from('events').select('*').order('event_date', { ascending: true })
-      .then(({ data }) => { setEvents(data || []); setLoading(false) })
-      .catch(() => setLoading(false))
+    Promise.all([
+      supabase.from('events').select('*').order('event_date', { ascending: true }),
+      supabase.from('raffles').select('*, events!inner(title, slug, event_date)').eq('is_active', true),
+    ]).then(([evRes, rafRes]) => {
+      setEvents(evRes.data || [])
+      setRaffles(rafRes.data || [])
+      setLoading(false)
+    }).catch(() => setLoading(false))
   }, [])
 
   const fmtTime = (t) => t ? t.substring(0, 5) : ''
@@ -91,6 +97,47 @@ export default function EventList() {
             </div>
           )}
 
+          {/* Live Raffles */}
+          {raffles.length > 0 && (
+            <div style={{ marginTop: 40 }}>
+              <div style={{ marginBottom: 20 }}>
+                <h2 style={{ marginBottom: 4 }}>🎟️ Live <span className="text-gold">Raffles</span></h2>
+                <p className="text-muted">Buy raffle tickets for a chance to win</p>
+              </div>
+              <div style={{ display: 'grid', gap: 12 }}>
+                {raffles.map(r => (
+                  <Link key={r.id} to={`/event/${r.events.slug}/raffle`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                    <div className="card card-hover" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                        <div style={{
+                          width: 52, height: 52, borderRadius: 'var(--radius)',
+                          background: 'linear-gradient(135deg, rgba(184,134,11,0.1), rgba(184,134,11,0.04))',
+                          border: '1px solid rgba(184,134,11,0.15)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem',
+                        }}>🎟️</div>
+                        <div>
+                          <h3 style={{ margin: 0, fontSize: '1rem' }}>{r.title}</h3>
+                          <div className="text-muted" style={{ fontSize: '0.78rem' }}>{r.events.title}</div>
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                        <div style={{ textAlign: 'right' }}>
+                          <div style={{ fontWeight: 700, fontSize: '1.15rem', color: 'var(--gold)' }}>R{Number(r.ticket_price)}</div>
+                          <div className="text-muted" style={{ fontSize: '0.7rem' }}>per ticket</div>
+                        </div>
+                        <div style={{
+                          padding: '6px 14px', borderRadius: 20, fontSize: '0.7rem', fontWeight: 700,
+                          background: 'rgba(22,163,74,0.08)', color: 'var(--green)',
+                          animation: 'pulse 2s ease-in-out infinite',
+                        }}>LIVE</div>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="site-footer">
             <img src="/logo.png" alt="" style={{ height: 36, opacity: 0.3, marginBottom: 10 }} />
             <div>AMEC Ebenezer Temple · 93 Sehlogo Street, Atteridgeville, Pretoria West</div>
@@ -167,6 +214,7 @@ export default function EventList() {
           margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--border);
           text-align: center; font-size: 0.75rem; color: var(--text-dim);
         }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
         @media (max-width: 640px) {
           .hero { min-height: 320px; padding: 36px 16px; }
